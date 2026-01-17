@@ -14,6 +14,9 @@ interface Log {
   nama: string;
   tugas: string;
   lokasi: string;
+  // canonical API fields (may be present instead of the legacy ones)
+  custom_description?: string | null;
+  location?: string | null;
   partners?: string | null;
   task_def_id?: number | null;
   logger_user_id?: number | null;
