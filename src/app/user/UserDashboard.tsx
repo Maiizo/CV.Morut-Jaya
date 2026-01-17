@@ -56,7 +56,7 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
             jam: item.jam_mulai || item.jam, // Menangani variasi nama field
             tugas: item.tugas,
             lokasi: item.lokasi,
-            partner: '-', // Placeholder jika backend belum kirim partner
+            partner: item.partners || item.partner || '-', // support partners
             status: 'Selesai', // Placeholder status (bisa disesuaikan logicnya nanti)
             nama: item.nama
           }));
@@ -88,6 +88,7 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
       ...l,
       tugas: updated.custom_description || l.tugas,
       lokasi: updated.location || l.lokasi,
+      partner: updated.partners || updated.partner || l.partner,
     }) : l));
     setEditItem(null);
   }
@@ -258,7 +259,12 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
                         <td className="px-6 py-4 text-slate-500">
                           <div className="flex items-center gap-2">
                             <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                            {item.lokasi}
+                                <div>
+                                  <div>{item.lokasi}</div>
+                                  {item.partner && item.partner !== '-' && (
+                                    <div className="text-xs text-slate-400">Rekan: {item.partner}</div>
+                                  )}
+                                </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -299,7 +305,12 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
                     
                     <div className="flex items-center gap-2 text-sm text-slate-600">
                       <MapPin className="h-4 w-4 text-slate-400" />
-                      {item.lokasi}
+                      <div>
+                        <div>{item.lokasi}</div>
+                        {item.partner && item.partner !== '-' && (
+                          <div className="text-xs text-slate-400">Rekan: {item.partner}</div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="pt-3 mt-1 border-t border-slate-100 flex justify-end">

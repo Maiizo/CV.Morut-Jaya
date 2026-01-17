@@ -4,21 +4,40 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const query = `
-      SELECT 
-        activity_logs.id,
-        users.username as nama,
-        activity_logs.custom_description as tugas,
-        activity_logs.location as lokasi,
-        to_char(activity_logs.log_time, 'HH24:MI:SS') as jam_mulai, 
-        to_char(activity_logs.created_at, 'DD Mon YYYY') as tanggal
-      FROM activity_logs
-      JOIN users ON activity_logs.logger_user_id = users.id
-      ORDER BY activity_logs.log_time DESC
-    `;
-    
-    const result = await pool.query(query);
-    return NextResponse.json(result.rows);
+    // Try selecting partners if column exists; otherwise fall back without partners
+    try {
+      const query = `
+        SELECT 
+          activity_logs.id,
+          users.username as nama,
+          activity_logs.custom_description as tugas,
+          activity_logs.location as lokasi,
+          activity_logs.partners as partners,
+          to_char(activity_logs.log_time, 'HH24:MI:SS') as jam_mulai, 
+          to_char(activity_logs.created_at, 'DD Mon YYYY') as tanggal
+        FROM activity_logs
+        JOIN users ON activity_logs.logger_user_id = users.id
+        ORDER BY activity_logs.log_time DESC
+      `;
+      const result = await pool.query(query);
+      return NextResponse.json(result.rows);
+    } catch (err) {
+      console.warn('partners column not present or query failed, retrying without partners:', err.message || err);
+      const query = `
+        SELECT 
+          activity_logs.id,
+          users.username as nama,
+          activity_logs.custom_description as tugas,
+          activity_logs.location as lokasi,
+          to_char(activity_logs.log_time, 'HH24:MI:SS') as jam_mulai, 
+          to_char(activity_logs.created_at, 'DD Mon YYYY') as tanggal
+        FROM activity_logs
+        JOIN users ON activity_logs.logger_user_id = users.id
+        ORDER BY activity_logs.log_time DESC
+      `;
+      const result = await pool.query(query);
+      return NextResponse.json(result.rows.map(r => ({ ...r, partners: null })));
+    }
   } catch (error) {
     console.error('Database Error:', error);
     return NextResponse.json({ error: 'Gagal ambil data' }, { status: 500 });
@@ -30,22 +49,47 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const { task_def_id, custom_description, log_time } = body;
-
-    // Jika frontend hanya mengirim satu field untuk lokasi/deskripsi,
-    // kita simpan ke kedua kolom agar GET tetap menampilkan sesuatu.
     const location = body.location || custom_description || null;
+    const partners = body.partners || null; // expected string like 'A, B'
 
     // NOTE: belum ada mekanisme auth; gunakan user id default 1 sebagai logger
     const loggerUserId = 1;
 
-    const insertQuery = `
-      INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, log_time)
-      VALUES ($1, $2, $3, $4, $5) RETURNING *
-    `;
-
-    const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, log_time]);
-
-    return NextResponse.json(result.rows[0]);
+    // Try inserting including partners if provided; fallback to insert without partners on failure
+    try {
+      if (partners !== null) {
+        const insertQuery = `
+          INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, partners, log_time)
+          VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
+        `;
+        const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, partners, log_time]);
+        return NextResponse.json(result.rows[0]);
+      } else {
+        const insertQuery = `
+          INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, log_time)
+          VALUES ($1, $2, $3, $4, $5) RETURNING *
+        `;
+        const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, log_time]);
+        return NextResponse.json(result.rows[0]);
+      }
+    } catch (insertErr) {
+      console.error('Insert error (retrying without partners if needed):', insertErr);
+      // If partners insertion failed and partners were provided, try without partners
+      if (partners !== null) {
+        try {
+          const insertQuery = `
+            INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, log_time)
+            VALUES ($1, $2, $3, $4, $5) RETURNING *
+          `;
+          const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, log_time]);
+          return NextResponse.json(result.rows[0]);
+        } catch (err2) {
+          console.error('Fallback insert also failed:', err2);
+          return NextResponse.json({ error: 'Gagal menyimpan log' }, { status: 500 });
+        }
+      }
+      return NextResponse.json({ error: 'Gagal menyimpan log' }, { status: 500 });
+    }
   } catch (error) {
     console.error('Error inserting log:', error);
     return NextResponse.json({ error: 'Gagal menyimpan log' }, { status: 500 });
@@ -56,7 +100,7 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { id, task_def_id, custom_description, location, log_time } = body;
+    const { id, task_def_id, custom_description, location, log_time, partners } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
@@ -74,6 +118,10 @@ export async function PUT(request) {
     if (custom_description !== undefined) {
       fields.push(`custom_description = $${idx++}`);
       values.push(custom_description);
+    }
+    if (partners !== undefined) {
+      fields.push(`partners = $${idx++}`);
+      values.push(partners);
     }
     if (location !== undefined) {
       fields.push(`location = $${idx++}`);

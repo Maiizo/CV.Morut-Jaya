@@ -26,6 +26,9 @@ export default function InputFormModal() {
   const [tasks, setTasks] = useState<{ id: number; title: string }[]>([]);
   const [selectedTask, setSelectedTask] = useState("");
   const [location, setLocation] = useState("");
+  const [locationsList, setLocationsList] = useState<string[]>([]);
+  const [partners, setPartners] = useState<string[]>([]);
+  const [partnerInput, setPartnerInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false); // Untuk kontrol buka/tutup modal
 
@@ -46,8 +49,22 @@ export default function InputFormModal() {
     // Panggil hanya jika modal sedang terbuka
     if (open) {
       fetchTasks();
+      fetchLocations();
     }
   }, [open]);
+
+  async function fetchLocations() {
+    try {
+      const res = await fetch('/api/locations');
+      if (res.ok) {
+        const data = await res.json();
+        setLocationsList(data);
+        if (data.length > 0 && !location) setLocation(data[0]);
+      }
+    } catch (error) {
+      console.error('Gagal ambil lokasi:', error);
+    }
+  }
 
   // 2. Fungsi Submit (Simpan Data)
   async function handleSubmit(e: React.FormEvent) {
@@ -62,7 +79,9 @@ export default function InputFormModal() {
         body: JSON.stringify({
             // Sesuaikan nama field dengan yang diminta API
             task_def_id: selectedTask, 
-            custom_description: location, // Kita pakai kolom deskripsi untuk detail lokasi
+        custom_description: location, // Kita pakai kolom deskripsi untuk detail lokasi (ke belakang kompatibel)
+        location, // send explicit location chosen
+        partners: partners.length > 0 ? partners.join(', ') : null,
             log_time: new Date().toISOString() // Kirim waktu sekarang
         }),
       });
@@ -80,6 +99,17 @@ export default function InputFormModal() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function addPartner() {
+    const v = partnerInput.trim();
+    if (!v) return;
+    setPartners(prev => [...prev, v]);
+    setPartnerInput('');
+  }
+
+  function removePartner(idx: number) {
+    setPartners(prev => prev.filter((_, i) => i !== idx));
   }
 
   return (
@@ -130,14 +160,36 @@ export default function InputFormModal() {
             <Label htmlFor="lokasi" className="text-right font-semibold text-gray-700 text-left">
               Lokasi / Detail
             </Label>
-            <Input
-              id="lokasi"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Contoh: Lantai 2, Toilet Pria, Ruang Meeting..."
-              className="col-span-3"
-              required
-            />
+            <Select value={location} onValueChange={setLocation} required>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="-- Pilih Lokasi --" />
+              </SelectTrigger>
+              <SelectContent>
+                {locationsList.length === 0 ? (
+                  <SelectItem value="loading" disabled>Memuat lokasi...</SelectItem>
+                ) : (
+                  locationsList.map((loc) => (
+                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* INPUT 3: PARTNERS (Optional, multiple) */}
+          <div className="grid gap-2">
+            <Label className="text-right font-semibold text-gray-700 text-left">Rekan Kerja (opsional)</Label>
+            <div className="flex gap-2">
+              <Input value={partnerInput} onChange={(e) => setPartnerInput(e.target.value)} placeholder="Tambah nama rekan, tekan +" />
+              <Button type="button" onClick={addPartner}>+</Button>
+            </div>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              {partners.map((p, i) => (
+                <button key={i} type="button" onClick={() => removePartner(i)} className="px-2 py-1 bg-slate-100 rounded-full text-sm border">
+                  {p} ×
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* TOMBOL SIMPAN */}

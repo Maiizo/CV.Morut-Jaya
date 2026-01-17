@@ -31,6 +31,9 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
   const [tasks, setTasks] = useState<{ id: number; title: string }[]>([]);
   const [selectedTask, setSelectedTask] = useState('');
   const [location, setLocation] = useState('');
+  const [locationsList, setLocationsList] = useState<string[]>([]);
+  const [partners, setPartners] = useState<string[]>([]);
+  const [partnerInput, setPartnerInput] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,6 +41,13 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
     if (item) {
       setSelectedTask(item.tugas || '');
       setLocation(item.lokasi || '');
+      // Parse partners string into array if provided
+      if ((item.partner || item.partners || '').length > 0) {
+        const pstr = item.partner || item.partners || '';
+        setPartners(pstr.split(',').map((s: string) => s.trim()).filter(Boolean));
+      } else {
+        setPartners([]);
+      }
     }
   }, [item]);
 
@@ -48,6 +58,11 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
         if (res.ok) {
           const data = await res.json();
           setTasks(data);
+          // If we have an item with tugas title, try to select matching task id
+          if (item && item.tugas) {
+            const found = data.find((t: any) => t.title === item.tugas);
+            if (found) setSelectedTask(found.id.toString());
+          }
         }
       } catch (err) {
         console.error('Gagal ambil daftar tugas:', err);
@@ -56,15 +71,35 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
     if (open) fetchTasks();
   }, [open]);
 
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch('/api/locations');
+        if (res.ok) {
+          const data = await res.json();
+          setLocationsList(data);
+          if (!location && data.length > 0) setLocation(data[0]);
+        }
+      } catch (err) {
+        console.error('Gagal ambil lokasi:', err);
+      }
+    }
+    if (open) fetchLocations();
+  }, [open]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!item) return;
     setLoading(true);
     try {
+      const payload: any = { id: item.id, location };
+      if (selectedTask) payload.task_def_id = parseInt(selectedTask, 10);
+      if (partners.length > 0) payload.partners = partners.join(', ');
+
       const res = await fetch('/api/logs', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: item.id, custom_description: selectedTask, location }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         const updated = await res.json();
@@ -82,6 +117,17 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
     }
   }
 
+  function addPartner() {
+    const v = partnerInput.trim();
+    if (!v) return;
+    setPartners(prev => [...prev, v]);
+    setPartnerInput('');
+  }
+
+  function removePartner(idx: number) {
+    setPartners(prev => prev.filter((_, i) => i !== idx));
+  }
+
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) onClose(); }}>
       <DialogTrigger asChild>
@@ -96,16 +142,34 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
         <form onSubmit={handleSubmit} className="grid gap-4 py-2">
           <div className="grid gap-2">
             <Label className="text-right font-semibold text-gray-700 text-left">Jenis Pekerjaan</Label>
-            <Select onValueChange={setSelectedTask} value={selectedTask} required>
+                  <Select onValueChange={setSelectedTask} value={selectedTask} required>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="-- Pilih Pekerjaan --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tasks.length === 0 ? (
+                        <SelectItem value="loading" disabled>Memuat daftar...</SelectItem>
+                      ) : (
+                        tasks.map((t) => (
+                          <SelectItem key={t.id} value={t.id.toString()}>{t.title}</SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label className="text-right font-semibold text-gray-700 text-left">Lokasi / Detail</Label>
+            <Select value={location} onValueChange={setLocation} required>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="-- Pilih Pekerjaan --" />
+                <SelectValue placeholder="-- Pilih Lokasi --" />
               </SelectTrigger>
               <SelectContent>
-                {tasks.length === 0 ? (
-                  <SelectItem value="loading" disabled>Memuat daftar...</SelectItem>
+                {locationsList.length === 0 ? (
+                  <SelectItem value="loading" disabled>Memuat lokasi...</SelectItem>
                 ) : (
-                  tasks.map((t) => (
-                    <SelectItem key={t.id} value={t.title}>{t.title}</SelectItem>
+                  locationsList.map((loc) => (
+                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
                   ))
                 )}
               </SelectContent>
@@ -113,13 +177,18 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
           </div>
 
           <div className="grid gap-2">
-            <Label className="text-right font-semibold text-gray-700 text-left">Lokasi / Detail</Label>
-            <Input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Contoh: Lantai 2, Ruang Server..."
-              required
-            />
+            <Label className="text-right font-semibold text-gray-700 text-left">Rekan Kerja (opsional)</Label>
+            <div className="flex gap-2">
+              <Input value={partnerInput} onChange={(e) => setPartnerInput(e.target.value)} placeholder="Tambah nama rekan, tekan +" />
+              <Button type="button" onClick={addPartner}>+</Button>
+            </div>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              {partners.map((p, i) => (
+                <button key={i} type="button" onClick={() => removePartner(i)} className="px-2 py-1 bg-slate-100 rounded-full text-sm border">
+                  {p} ×
+                </button>
+              ))}
+            </div>
           </div>
 
           <DialogFooter>
