@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from 'react';
-import { UserDashboard } from './user/UserDashboard';
-import { AdminDashboard } from './admin/AdminDashboard';
-import { InputFormModal } from './components/InputFormModal';
-import { Button } from './components/ui/button';
+import  UserDashboard  from './user/UserDashboard';
+import AdminDashboard  from './admin/AdminDashboard';
+import { InputFormModal } from '@/components/InputFormModal';
+import { Button } from "@/components/ui/button";
 import { Briefcase, ShieldCheck } from 'lucide-react';
 
 type ViewMode = 'user' | 'admin' | 'login';
