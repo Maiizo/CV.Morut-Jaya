@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import InputFormModal from "@/components/InputFormModal"; // Pastikan path ini benar
-import EditFormModal from '@/components/EditFormModal';
+import EditFormModal2 from '@/components/EditFormModal2';
 
 // --- TIPE DATA ---
 interface LogEntry {
@@ -54,9 +54,9 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
           const formattedData = data.map((item: any) => ({
             id: item.id,
             jam: item.jam_mulai || item.jam, // Menangani variasi nama field
-            tugas: item.tugas,
-            lokasi: item.lokasi,
-            partner: item.partners || item.partner || '-', // support partners
+            tugas: item.custom_description ?? item.tugas ?? '',
+            lokasi: item.location ?? item.lokasi ?? '',
+            partner: item.partners ?? item.partner ?? '-', // support partners
             status: 'Selesai', // Placeholder status (bisa disesuaikan logicnya nanti)
             nama: item.nama
           }));
@@ -235,15 +235,16 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
                   <tr>
                     <th className="px-6 py-4">Waktu</th>
                     <th className="px-6 py-4">Tugas</th>
-                    <th className="px-6 py-4">Lokasi</th>
-                    <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Lokasi</th>
+                      <th className="px-6 py-4">Rekan</th>
+                      <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {currentData.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
+                      <td colSpan={6} className="px-6 py-10 text-center text-slate-400">
                         Belum ada data untuk ditampilkan.
                       </td>
                     </tr>
@@ -259,14 +260,12 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
                         <td className="px-6 py-4 text-slate-500">
                           <div className="flex items-center gap-2">
                             <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                                <div>
-                                  <div>{item.lokasi}</div>
-                                  {item.partner && item.partner !== '-' && (
-                                    <div className="text-xs text-slate-400">Rekan: {item.partner}</div>
-                                  )}
-                                </div>
+                            <div>
+                              <div>{item.lokasi}</div>
+                            </div>
                           </div>
                         </td>
+                        <td className="px-6 py-4 text-slate-700">{item.partner && item.partner !== '-' ? item.partner : '-'}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(item.status)}`}>
                             {item.status || 'Selesai'}
@@ -325,7 +324,7 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
             </div>
 
             {/* Edit Modal */}
-            <EditFormModal item={editItem} onClose={() => setEditItem(null)} onSaved={handleSaved} />
+            <EditFormModal2 item={editItem} onClose={() => setEditItem(null)} onSaved={handleSaved} />
 
             {/* PAGINATION */}
             {totalPages > 1 && (

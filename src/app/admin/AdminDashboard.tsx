@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button"; // Sesuaikan path import ini jika berbeda
 import { Input } from "@/components/ui/input"; // Kita butuh input text biasa
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import EditFormModal2 from '@/components/EditFormModal2';
 
 interface Log {
   id: number;
@@ -12,6 +14,11 @@ interface Log {
   nama: string;
   tugas: string;
   lokasi: string;
+  partners?: string | null;
+  task_def_id?: number | null;
+  logger_user_id?: number | null;
+  log_time?: string | null;
+  created_at?: string | null;
 }
 
 interface AdminDashboardProps {
@@ -22,6 +29,8 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDashboardProps) {
   // State untuk Data Tabel
   const [logs, setLogs] = useState<Log[]>([]);
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null);
+  const [editItem, setEditItem] = useState<Log | null>(null);
   
   // State untuk Form Tambah Pekerjaan
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -128,7 +137,8 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
                   <th className="p-4 border-b">Nama Karyawan</th>
                   <th className="p-4 border-b">Tugas / Ket.</th>
                   <th className="p-4 border-b">Lokasi</th>
-                  <th className="p-4 border-b">Status</th>
+                  <th className="p-4 border-b">Rekan</th>
+                  <th className="p-4 border-b">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -143,20 +153,18 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
                     <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                       <td className="p-4 font-medium text-gray-900">{log.tanggal}</td>
                       {/* Tampilkan Jam Lengkap dengan Detik */}
-                      <td className="p-4 font-mono text-blue-600">
-                        {log.jam_mulai}
-                      </td>
+                      <td className="p-4 font-mono text-blue-600">{log.jam_mulai}</td>
                       <td className="p-4 font-semibold">{log.nama}</td>
                       <td className="p-4">
-                        <span className="bg-gray-100 px-2 py-1 rounded text-gray-700">
-                          {log.tugas}
-                        </span>
+                        <span className="bg-gray-100 px-2 py-1 rounded text-gray-700">{log.custom_description ?? log.tugas}</span>
                       </td>
-                      <td className="p-4 text-gray-600">{log.lokasi}</td>
+                      <td className="p-4 text-gray-600">{log.location ?? log.lokasi}</td>
+                      <td className="p-4 text-gray-700">{log.partners || '-'}</td>
                       <td className="p-4">
-                        <span className="text-green-600 font-medium text-xs border border-green-200 bg-green-50 px-2 py-1 rounded-full">
-                          Selesai
-                        </span>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setSelectedLog(log)}>Lihat Detail</Button>
+                          <Button size="sm" onClick={() => setEditItem(log)}>Edit</Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -166,6 +174,46 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
           </div>
         </CardContent>
       </Card>
+
+      {/* Detail Modal */}
+      <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detail Log</DialogTitle>
+          </DialogHeader>
+          {selectedLog && (
+            <div className="py-4 space-y-3">
+              <div><strong>ID:</strong> {selectedLog.id}</div>
+              <div><strong>Nama:</strong> {selectedLog.nama}</div>
+              <div><strong>Tugas / Keterangan:</strong> {selectedLog.custom_description ?? selectedLog.tugas}</div>
+              <div><strong>Lokasi:</strong> {selectedLog.location ?? selectedLog.lokasi}</div>
+              <div><strong>Rekan:</strong> {selectedLog.partners ?? '-'}</div>
+              <div><strong>Log Time:</strong> {selectedLog.log_time ?? selectedLog.jam_mulai}</div>
+              <div><strong>Dibuat:</strong> {selectedLog.created_at ?? selectedLog.tanggal}</div>
+              <div><strong>Raw JSON:</strong></div>
+              <pre className="bg-slate-100 p-2 rounded text-xs overflow-auto">{JSON.stringify(selectedLog, null, 2)}</pre>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="ghost">Tutup</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal for Admin (reuse EditFormModal) */}
+      <EditFormModal2 item={editItem} onClose={() => setEditItem(null)} onSaved={(updated: any) => {
+        // update logs list with returned row
+        setLogs(prev => prev.map(l => l.id === updated.id ? ({
+          ...l,
+          custom_description: updated.custom_description ?? l.custom_description,
+          location: updated.location ?? l.location,
+          partners: updated.partners ?? l.partners,
+          task_def_id: updated.task_def_id ?? l.task_def_id,
+        }) : l));
+        setEditItem(null);
+      }} />
     </div>
   );
 }

@@ -73,16 +73,17 @@ export default function InputFormModal() {
 
     try {
       // Kirim data ke API Logs
+      // find selected task title for storing in custom_description
+      const taskTitle = tasks.find(t => t.id.toString() === selectedTask)?.title || null;
       const res = await fetch('/api/logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            // Sesuaikan nama field dengan yang diminta API
-            task_def_id: selectedTask, 
-        custom_description: location, // Kita pakai kolom deskripsi untuk detail lokasi (ke belakang kompatibel)
-        location, // send explicit location chosen
-        partners: partners.length > 0 ? partners.join(', ') : null,
-            log_time: new Date().toISOString() // Kirim waktu sekarang
+          task_def_id: selectedTask ? parseInt(selectedTask, 10) : null,
+          custom_description: taskTitle, // store task title as description
+          location,
+          partners: partners.length > 0 ? partners.join(', ') : null,
+          log_time: new Date().toISOString()
         }),
       });
 

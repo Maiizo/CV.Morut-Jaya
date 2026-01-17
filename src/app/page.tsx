@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import  UserDashboard  from './user/UserDashboard';
-import AdminDashboard  from './admin/AdminDashboard';
-import InputFormModal from '@/components/InputFormModal';
+import UserDashboard from './user/UserDashboard';
+import AdminDashboard from './admin/AdminDashboard';
 import { Button } from "@/components/ui/button";
 import { Briefcase, ShieldCheck } from 'lucide-react';
 
@@ -11,8 +10,6 @@ type ViewMode = 'user' | 'admin' | 'login';
 
 export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('login');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingLogId, setEditingLogId] = useState<number | null>(null);
 
   const handleLogin = (mode: 'user' | 'admin') => {
     setViewMode(mode);
@@ -20,23 +17,6 @@ export default function App() {
 
   const handleLogout = () => {
     setViewMode('login');
-    setIsModalOpen(false);
-    setEditingLogId(null);
-  };
-
-  const handleInputLog = () => {
-    setEditingLogId(null);
-    setIsModalOpen(true);
-  };
-
-  const handleEditLog = (id: number) => {
-    setEditingLogId(id);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingLogId(null);
   };
 
   // Login Screen
@@ -89,19 +69,12 @@ export default function App() {
   // User Dashboard View
   if (viewMode === 'user') {
     return (
-      <>
-        <UserDashboard
-          onInputLog={handleInputLog}
-          onEditLog={handleEditLog}
-          userName="Ahmad Saputra"
-          onLogout={handleLogout}
-        />
-        <InputFormModal
-          open={isModalOpen}
-          onClose={handleCloseModal}
-          editData={editingLogId ? { id: editingLogId, jam: '08:00 - 12:00', tugas: 'Pemasangan Pipa', lokasi: 'Gedung A - Lt. 3', partner: 'Ahmad, Budi', status: 'Selesai' } : null}
-        />
-      </>
+      // ✅ Error Fixed: Removed onInputLog/onEditLog props
+      // UserDashboard now handles its own modals internally
+      <UserDashboard
+        userName="Ahmad Saputra"
+        onLogout={handleLogout}
+      />
     );
   }
 

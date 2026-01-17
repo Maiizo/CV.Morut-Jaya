@@ -15,6 +15,28 @@ async function seed() {
   const client = await pool.connect();
 
   try {
+    // --- RUN DB DDL MIGRATIONS (idempotent) ---
+    console.log('🔧 Menjalankan DDL migrasi (jika perlu)...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS locations (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      ALTER TABLE activity_logs
+        ADD COLUMN IF NOT EXISTS partners TEXT;
+    `);
+    // Insert some default locations if table empty
+    const locCount = await client.query('SELECT COUNT(*) FROM locations');
+    if (parseInt(locCount.rows[0].count, 10) === 0) {
+      const defaultLocs = ['Lobby', 'Gudang', 'Lantai 1', 'Lantai 2', 'Toilet Pria', 'Toilet Wanita'];
+      for (const name of defaultLocs) {
+        await client.query('INSERT INTO locations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [name]);
+      }
+      console.log('   ✅ Default locations added.');
+    }
+
     console.log('🌱 Mulai proses seeding...');
 
     // --- 1. SEED USERS (Pengguna) ---

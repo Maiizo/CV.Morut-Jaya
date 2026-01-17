@@ -26,7 +26,7 @@ interface EditFormModalProps {
   onSaved: (updated: any) => void;
 }
 
-export default function EditFormModal({ item, onClose, onSaved }: EditFormModalProps) {
+export default function EditFormModal2({ item, onClose, onSaved }: EditFormModalProps) {
   const [open, setOpen] = useState(false);
   const [tasks, setTasks] = useState<{ id: number; title: string }[]>([]);
   const [selectedTask, setSelectedTask] = useState('');
@@ -39,12 +39,13 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
   useEffect(() => {
     setOpen(!!item);
     if (item) {
-      setSelectedTask(item.tugas || '');
-      setLocation(item.lokasi || '');
+      // Prefer API's canonical fields: custom_description and location
+      setSelectedTask('');
+      setLocation((item as any).location ?? (item as any).lokasi ?? '');
       // Parse partners string into array if provided
-      if ((item.partner || item.partners || '').length > 0) {
-        const pstr = item.partner || item.partners || '';
-        setPartners(pstr.split(',').map((s: string) => s.trim()).filter(Boolean));
+      const partnerStr = (item as any).partners ?? (item as any).partner ?? null;
+      if (partnerStr && String(partnerStr).trim().length > 0) {
+        setPartners(String(partnerStr).split(',').map((s: string) => s.trim()).filter(Boolean));
       } else {
         setPartners([]);
       }
@@ -58,10 +59,18 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
         if (res.ok) {
           const data = await res.json();
           setTasks(data);
-          // If we have an item with tugas title, try to select matching task id
-          if (item && item.tugas) {
-            const found = data.find((t: any) => t.title === item.tugas);
-            if (found) setSelectedTask(found.id.toString());
+          // Preselect based on item.task_def_id if available,
+          // otherwise try matching by title/custom_description
+          if (item) {
+            if ((item as any).task_def_id) {
+              setSelectedTask(String((item as any).task_def_id));
+            } else if ((item as any).custom_description) {
+              const found = data.find((t: any) => t.title === (item as any).custom_description || (item as any).tugas);
+              if (found) setSelectedTask(found.id.toString());
+            } else if ((item as any).tugas) {
+              const found = data.find((t: any) => t.title === (item as any).tugas);
+              if (found) setSelectedTask(found.id.toString());
+            }
           }
         }
       } catch (err) {
@@ -93,7 +102,11 @@ export default function EditFormModal({ item, onClose, onSaved }: EditFormModalP
     setLoading(true);
     try {
       const payload: any = { id: item.id, location };
-      if (selectedTask) payload.task_def_id = parseInt(selectedTask, 10);
+      if (selectedTask) {
+        payload.task_def_id = parseInt(selectedTask, 10);
+        const taskTitle = tasks.find(t => t.id.toString() === selectedTask)?.title || null;
+        if (taskTitle) payload.custom_description = taskTitle;
+      }
       if (partners.length > 0) payload.partners = partners.join(', ');
 
       const res = await fetch('/api/logs', {
