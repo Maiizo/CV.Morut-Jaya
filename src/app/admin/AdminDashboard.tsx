@@ -193,8 +193,6 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
               <div><strong>Rekan:</strong> {selectedLog.partners ?? '-'}</div>
               <div><strong>Log Time:</strong> {selectedLog.log_time ?? selectedLog.jam_mulai}</div>
               <div><strong>Dibuat:</strong> {selectedLog.created_at ?? selectedLog.tanggal}</div>
-              <div><strong>Raw JSON:</strong></div>
-              <pre className="bg-slate-100 p-2 rounded text-xs overflow-auto">{JSON.stringify(selectedLog, null, 2)}</pre>
             </div>
           )}
           <DialogFooter>

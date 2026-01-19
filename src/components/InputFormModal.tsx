@@ -34,24 +34,21 @@ export default function InputFormModal() {
 
   // 1. Ambil daftar pekerjaan dari Database saat modal dibuka
   useEffect(() => {
-    async function fetchTasks() {
-      try {
-        const res = await fetch('/api/tasks'); // Panggil API Tasks yang sudah kita buat
-        if (res.ok) {
-          const data = await res.json();
-          setTasks(data);
-        }
-      } catch (error) {
-        console.error("Gagal ambil daftar tugas:", error);
+  async function fetchTasks() {
+    try {
+      const res = await fetch('/api/tasks');
+      if (res.ok) {
+        const data = await res.json();
+        setTasks(data);
       }
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
     }
-    
-    // Panggil hanya jika modal sedang terbuka
-    if (open) {
-      fetchTasks();
-      fetchLocations();
-    }
-  }, [open]);
+  }
+  
+  fetchTasks();
+  fetchLocations()
+}, []);
 
   async function fetchLocations() {
     try {

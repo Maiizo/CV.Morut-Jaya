@@ -24,6 +24,14 @@ async function seed() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
+      -- Create task_definitions table if missing
+      CREATE TABLE IF NOT EXISTS task_definitions (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL UNIQUE,
+        is_archived BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
       ALTER TABLE activity_logs
         ADD COLUMN IF NOT EXISTS partners TEXT;
     `);
