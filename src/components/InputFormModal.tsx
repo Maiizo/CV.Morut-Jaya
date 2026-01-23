@@ -29,6 +29,8 @@ export default function InputFormModal() {
   const [locationsList, setLocationsList] = useState<string[]>([]);
   const [partners, setPartners] = useState<string[]>([]);
   const [partnerInput, setPartnerInput] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [satuan, setSatuan] = useState('');
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false); // Untuk kontrol buka/tutup modal
 
@@ -80,6 +82,8 @@ export default function InputFormModal() {
           custom_description: taskTitle, // store task title as description
           location,
           partners: partners.length > 0 ? partners.join(', ') : null,
+          quantity: quantity || null,
+          satuan: satuan || null,
           log_time: new Date().toISOString()
         }),
       });
@@ -174,7 +178,44 @@ export default function InputFormModal() {
             </Select>
           </div>
 
-          {/* INPUT 3: PARTNERS (Optional, multiple) */}
+          {/* INPUT 3: QUANTITY & SATUAN */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="quantity" className="text-right font-semibold text-gray-700 text-left">Jumlah</Label>
+              <Input
+                id="quantity"
+                type="number"
+                min="0"
+                value={quantity}
+                onChange={e => setQuantity(e.target.value)}
+                placeholder="Masukkan jumlah"
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="satuan" className="text-right font-semibold text-gray-700 text-left">Satuan</Label>
+              <Select value={satuan} onValueChange={setSatuan} required>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih satuan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cm">cm</SelectItem>
+                  <SelectItem value="meter">meter</SelectItem>
+                  <SelectItem value="hektar">hektar</SelectItem>
+                  <SelectItem value="biji">biji</SelectItem>
+                  <SelectItem value="kg">kg</SelectItem>
+                  <SelectItem value="liter">liter</SelectItem>
+                  <SelectItem value="unit">unit</SelectItem>
+                  <SelectItem value="buah">buah</SelectItem>
+                  <SelectItem value="batang">batang</SelectItem>
+                  <SelectItem value="lembar">lembar</SelectItem>
+                  <SelectItem value="lainnya">lainnya</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* INPUT 4: PARTNERS (Optional, multiple) */}
           <div className="grid gap-2">
             <Label className="text-right font-semibold text-gray-700 text-left">Rekan Kerja (opsional)</Label>
             <div className="flex gap-2">

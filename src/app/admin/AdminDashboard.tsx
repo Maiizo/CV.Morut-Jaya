@@ -24,7 +24,8 @@ interface Log {
   tugas: string; // This is now guaranteed by our mapping
   lokasi: string; // This is now guaranteed by our mapping
   partners?: string | null;
-  
+  quantity?: string | null;
+  satuan?: string | null;
   // Keep these for reference/compatibility
   custom_description?: string | null;
   location?: string | null;
@@ -90,7 +91,9 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
         ...item,
         tugas: item.custom_description || item.tugas || '-',
         lokasi: item.location || item.lokasi || '-',
-        partners: item.partners || ''
+        partners: item.partners || '',
+        quantity: item.quantity || '',
+        satuan: item.satuan || '',
       }));
 
       setLogs(formattedData);
@@ -298,35 +301,37 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
               <tr>
-                <th 
-                    className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group"
-                    onClick={() => handleSort('tanggal')}
-                >
-                    <div className="flex items-center">Tanggal {renderSortIcon('tanggal')}</div>
-                </th>
-                <th 
-                    className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group"
-                    onClick={() => handleSort('jam_mulai')}
-                >
-                    <div className="flex items-center">Jam {renderSortIcon('jam_mulai')}</div>
-                </th>
-                <th 
-                    className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group"
-                    onClick={() => handleSort('nama')}
-                >
-                    <div className="flex items-center">Nama {renderSortIcon('nama')}</div>
-                </th>
-                <th 
-                    className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group"
-                    onClick={() => handleSort('tugas')}
-                >
-                    <div className="flex items-center">Tugas {renderSortIcon('tugas')}</div>
-                </th>
-                <th className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group" onClick={() => handleSort('lokasi')}>
-                  <div className="flex items-center">Lokasi {renderSortIcon('lokasi')}</div>
-                </th>
-                <th className="px-6 py-4 font-semibold">Rekan</th>
-                <th className="px-6 py-4 font-semibold text-right">Aksi</th>
+              <th 
+                className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group"
+                onClick={() => handleSort('tanggal')}
+              >
+                <div className="flex items-center">Tanggal {renderSortIcon('tanggal')}</div>
+              </th>
+              <th 
+                className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group"
+                onClick={() => handleSort('jam_mulai')}
+              >
+                <div className="flex items-center">Jam {renderSortIcon('jam_mulai')}</div>
+              </th>
+              <th 
+                className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group"
+                onClick={() => handleSort('nama')}
+              >
+                <div className="flex items-center">Nama {renderSortIcon('nama')}</div>
+              </th>
+              <th 
+                className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group"
+                onClick={() => handleSort('tugas')}
+              >
+                <div className="flex items-center">Tugas {renderSortIcon('tugas')}</div>
+              </th>
+              <th className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group" onClick={() => handleSort('lokasi')}>
+                <div className="flex items-center">Lokasi {renderSortIcon('lokasi')}</div>
+              </th>
+              <th className="px-6 py-4 font-semibold">Jumlah</th>
+              <th className="px-6 py-4 font-semibold">Satuan</th>
+              <th className="px-6 py-4 font-semibold">Rekan</th>
+              <th className="px-6 py-4 font-semibold text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
@@ -393,9 +398,18 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
                         </button>
                     </td>
 
+
+                    {/* Quantity */}
+                    <td className="px-6 py-4 text-slate-700 text-sm text-center">
+                      {log.quantity || '-'}
+                    </td>
+                    {/* Satuan */}
+                    <td className="px-6 py-4 text-slate-700 text-sm text-center">
+                      {log.satuan || '-'}
+                    </td>
                     {/* Partners */}
                     <td className="px-6 py-4 text-slate-500 text-sm">
-                        {log.partners ? log.partners : '-'}
+                      {log.partners ? log.partners : '-'}
                     </td>
 
                     {/* Actions */}
@@ -419,33 +433,41 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
           <DialogHeader>
             <DialogTitle>Detail Aktivitas</DialogTitle>
           </DialogHeader>
-          {selectedLog && (
+           {selectedLog && (
             <div className="grid gap-4 py-4 text-sm">
-               <div className="grid grid-cols-3 items-center gap-4">
-                  <span className="font-semibold text-slate-500">Karyawan</span>
-                  <span className="col-span-2 font-medium text-slate-900">{selectedLog.nama}</span>
-               </div>
-               <div className="grid grid-cols-3 items-center gap-4">
-                  <span className="font-semibold text-slate-500">Tugas</span>
-                  <span className="col-span-2 bg-slate-100 p-2 rounded">{selectedLog.tugas}</span>
-               </div>
-               <div className="grid grid-cols-3 items-center gap-4">
-                  <span className="font-semibold text-slate-500">Waktu</span>
-                  <span className="col-span-2">{selectedLog.tanggal} — {selectedLog.jam_mulai}</span>
-               </div>
-               <div className="grid grid-cols-3 items-center gap-4">
-                  <span className="font-semibold text-slate-500">Lokasi</span>
-                  <span className="col-span-2 flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-slate-400" />
-                    {selectedLog.lokasi}
-                  </span>
-               </div>
-               <div className="grid grid-cols-3 items-center gap-4">
-                  <span className="font-semibold text-slate-500">Rekan</span>
-                  <span className="col-span-2">{selectedLog.partners || '-'}</span>
-               </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-slate-500">Karyawan</span>
+                <span className="col-span-2 font-medium text-slate-900">{selectedLog.nama}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-slate-500">Tugas</span>
+                <span className="col-span-2 bg-slate-100 p-2 rounded">{selectedLog.tugas}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-slate-500">Waktu</span>
+                <span className="col-span-2">{selectedLog.tanggal} — {selectedLog.jam_mulai}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-slate-500">Lokasi</span>
+                <span className="col-span-2 flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-slate-400" />
+                  {selectedLog.lokasi}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-slate-500">Jumlah</span>
+                <span className="col-span-2">{selectedLog.quantity || '-'}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-slate-500">Satuan</span>
+                <span className="col-span-2">{selectedLog.satuan || '-'}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-slate-500">Rekan</span>
+                <span className="col-span-2">{selectedLog.partners || '-'}</span>
+              </div>
             </div>
-          )}
+           )}
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Tutup</Button>

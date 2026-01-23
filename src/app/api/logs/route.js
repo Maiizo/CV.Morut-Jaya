@@ -31,25 +31,27 @@ export async function POST(request) {
     const { task_def_id, custom_description, log_time } = body;
     const location = body.location || custom_description || null;
     const partners = body.partners || null; // expected string like 'A, B'
+    const quantity = body.quantity || null;
+    const satuan = body.satuan || null;
 
     // NOTE: belum ada mekanisme auth; gunakan user id default 1 sebagai logger
     const loggerUserId = 1;
 
-    // Try inserting including partners if provided; fallback to insert without partners on failure
+    // Try inserting including partners, quantity, satuan if provided; fallback to insert without partners on failure
     try {
       if (partners !== null) {
         const insertQuery = `
-          INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, partners, log_time)
-          VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
+          INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, partners, quantity, satuan, log_time)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
         `;
-        const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, partners, log_time]);
+        const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, partners, quantity, satuan, log_time]);
         return NextResponse.json(result.rows[0]);
       } else {
         const insertQuery = `
-          INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, log_time)
-          VALUES ($1, $2, $3, $4, $5) RETURNING *
+          INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, quantity, satuan, log_time)
+          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
         `;
-        const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, log_time]);
+        const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, quantity, satuan, log_time]);
         return NextResponse.json(result.rows[0]);
       }
     } catch (insertErr) {
@@ -58,10 +60,10 @@ export async function POST(request) {
       if (partners !== null) {
         try {
           const insertQuery = `
-            INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, log_time)
-            VALUES ($1, $2, $3, $4, $5) RETURNING *
+            INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, quantity, satuan, log_time)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
           `;
-          const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, log_time]);
+          const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, quantity, satuan, log_time]);
           return NextResponse.json(result.rows[0]);
         } catch (err2) {
           console.error('Fallback insert also failed:', err2);
