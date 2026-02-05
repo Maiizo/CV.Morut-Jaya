@@ -34,6 +34,13 @@ async function seed() {
 
       ALTER TABLE activity_logs
         ADD COLUMN IF NOT EXISTS partners TEXT;
+      
+      -- Add quantity and satuan columns (from migration 003)
+      ALTER TABLE activity_logs
+        ADD COLUMN IF NOT EXISTS quantity TEXT;
+      
+      ALTER TABLE activity_logs
+        ADD COLUMN IF NOT EXISTS satuan TEXT;
     `);
     // Insert some default locations if table empty
     const locCount = await client.query('SELECT COUNT(*) FROM locations');
@@ -50,16 +57,21 @@ async function seed() {
     // --- 1. SEED USERS (Pengguna) ---
     console.log('👤 Membuat user...');
     
-    // Password seragam: "123456" (di-hash biar aman)
+    // Hash password untuk admin khusus
+    const saltAdmin = await bcrypt.genSalt(10);
+    const hashAdmin = await bcrypt.hash('admin123cvjlm', saltAdmin);
+    
+    // Password seragam untuk user lain: "123456"
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash('123456', salt);
 
     // List User yang mau dibuat
     const users = [
-      { username: 'Bapak Owner', email: 'owner@kantor.com', role: 'owner' },
-      { username: 'Bu Admin', email: 'admin@kantor.com', role: 'admin' },
-      { username: 'Ujang (Staff)', email: 'ujang@kantor.com', role: 'user' },
-      { username: 'Siti (Staff)', email: 'siti@kantor.com', role: 'user' },
+      { username: 'admincvjlm', email: 'admin@cvjlm.com', role: 'admin', password: hashAdmin },
+      { username: 'Bapak Owner', email: 'owner@kantor.com', role: 'owner', password: hash },
+      { username: 'Bu Admin', email: 'admin@kantor.com', role: 'admin', password: hash },
+      { username: 'Ujang (Staff)', email: 'ujang@kantor.com', role: 'user', password: hash },
+      { username: 'Siti (Staff)', email: 'siti@kantor.com', role: 'user', password: hash },
     ];
 
     for (const u of users) {
@@ -69,7 +81,7 @@ async function seed() {
       if (check.rows.length === 0) {
         await client.query(
           `INSERT INTO users (username, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
-          [u.username, u.email, hash, u.role]
+          [u.username, u.email, u.password, u.role]
         );
         console.log(`   ✅ User dibuat: ${u.username}`);
       } else {

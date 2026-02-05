@@ -107,11 +107,13 @@ export default function InputFormModal() {
         setOpen(false); // Tutup modal otomatis
         window.location.reload(); // Refresh halaman biar data baru muncul di tabel
       } else {
-        alert("❌ Gagal menyimpan. Coba lagi.");
+        const errorData = await res.json();
+        console.error('Save failed:', errorData);
+        alert(`❌ Gagal menyimpan: ${errorData.error || 'Coba lagi.'}`);
       }
     } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan sistem.");
+      console.error('Error submitting form:', error);
+      alert("Terjadi kesalahan sistem: " + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setLoading(false);
     }

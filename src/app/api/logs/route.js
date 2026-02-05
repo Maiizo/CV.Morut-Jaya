@@ -34,7 +34,24 @@ export async function POST(request) {
     const quantity = body.quantity || null;
     const satuan = body.satuan || null;
 
+    // Validate required fields
+    if (!task_def_id) {
+      console.error('Validation error: task_def_id is required');
+      return NextResponse.json({ error: 'Jenis pekerjaan harus dipilih' }, { status: 400 });
+    }
+
+    if (!log_time) {
+      console.error('Validation error: log_time is required');
+      return NextResponse.json({ error: 'Waktu log harus diisi' }, { status: 400 });
+    }
+
     // NOTE: belum ada mekanisme auth; gunakan user id default 1 sebagai logger
+    // Check if user exists first
+    const userCheck = await pool.query('SELECT id FROM users WHERE id = 1 LIMIT 1');
+    if (userCheck.rows.length === 0) {
+      console.error('Default user (id=1) tidak ditemukan. Silakan jalankan seed.js');
+      return NextResponse.json({ error: 'User default tidak ditemukan. Hubungi administrator.' }, { status: 500 });
+    }
     const loggerUserId = 1;
 
     // Try inserting including partners, quantity, satuan if provided; fallback to insert without partners on failure
@@ -44,6 +61,7 @@ export async function POST(request) {
           INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, partners, quantity, satuan, log_time)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
         `;
+        console.log('Inserting log with partners:', { task_def_id, loggerUserId, custom_description, location, partners, quantity, satuan, log_time });
         const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, partners, quantity, satuan, log_time]);
         return NextResponse.json(result.rows[0]);
       } else {
@@ -51,14 +69,30 @@ export async function POST(request) {
           INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, quantity, satuan, log_time)
           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
         `;
+        console.log('Inserting log without partners:', { task_def_id, loggerUserId, custom_description, location, quantity, satuan, log_time });
         const result = await pool.query(insertQuery, [task_def_id, loggerUserId, custom_description, location, quantity, satuan, log_time]);
         return NextResponse.json(result.rows[0]);
       }
     } catch (insertErr) {
-      console.error('Insert error (retrying without partners if needed):', insertErr);
+      console.error('Insert error details:', insertErr);
+      console.error('Error code:', insertErr.code);
+      console.error('Error message:', insertErr.message);
+      
+      // Provide more specific error messages
+      if (insertErr.code === '23503') {
+        return NextResponse.json({ error: 'Pekerjaan atau user tidak valid' }, { status: 400 });
+      }
+      if (insertErr.code === '23505') {
+        return NextResponse.json({ error: 'Data duplikat terdeteksi' }, { status: 400 });
+      }
+      if (insertErr.code === '42703') {
+        return NextResponse.json({ error: 'Kolom database tidak ditemukan. Jalankan migrasi.' }, { status: 500 });
+      }
+      
       // If partners insertion failed and partners were provided, try without partners
       if (partners !== null) {
         try {
+          console.log('Retrying insert without partners column...');
           const insertQuery = `
             INSERT INTO activity_logs (task_def_id, logger_user_id, custom_description, location, quantity, satuan, log_time)
             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
@@ -67,14 +101,18 @@ export async function POST(request) {
           return NextResponse.json(result.rows[0]);
         } catch (err2) {
           console.error('Fallback insert also failed:', err2);
-          return NextResponse.json({ error: 'Gagal menyimpan log' }, { status: 500 });
+          return NextResponse.json({ error: `Gagal menyimpan log: ${err2.message}` }, { status: 500 });
         }
       }
-      return NextResponse.json({ error: 'Gagal menyimpan log' }, { status: 500 });
+      return NextResponse.json({ error: `Gagal menyimpan log: ${insertErr.message}` }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error inserting log:', error);
-    return NextResponse.json({ error: 'Gagal menyimpan log' }, { status: 500 });
+    console.error('Error inserting log - Outer catch:', error);
+    console.error('Error stack:', error.stack);
+    return NextResponse.json({ 
+      error: 'Gagal menyimpan log: ' + (error.message || 'Unknown error'),
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }
 

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import EditFormModal2 from '@/components/EditFormModal2';
+import LogoutButton from '@/components/LogoutButton';
 import { 
   ArrowUpDown, 
   Filter, 
@@ -37,7 +38,6 @@ interface Log {
 
 interface AdminDashboardProps {
   userName?: string;
-  onLogout?: () => void;
 }
 
 // Helper for highlighting text during search
@@ -56,7 +56,7 @@ const Highlight = ({ text, highlight }: { text: string; highlight: string }) => 
   );
 };
 
-export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDashboardProps) {
+export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardProps) {
   // --- STATE ---
   const [logs, setLogs] = useState<Log[]>([]);
   const [selectedLog, setSelectedLog] = useState<Log | null>(null);
@@ -219,6 +219,12 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
             Halo, <span className="font-semibold text-blue-600">{userName}</span>. 
             Saat ini menampilkan <span className="font-bold">{processedLogs.length}</span> data.
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <LogoutButton 
+            variant="outline"
+            className="text-slate-600 hover:text-red-600 hover:border-red-300"
+          />
         </div>
       </div>
 

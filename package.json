@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "node script/seed.js"
+    "seed": "node script/seed.js",
+    "check-db": "node script/check-db.js"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.1.4",
@@ -18,6 +19,8 @@
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^1.2.1",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.3",
     "lucide-react": "^0.487.0",
     "next": "16.1.2",

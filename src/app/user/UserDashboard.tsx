@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Pencil, Plus, Clock, MapPin, Users, Briefcase, 
-  Filter, Calendar, User, LogOut, ChevronLeft, ChevronRight 
+  Filter, Calendar, User, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import InputFormModal from "@/components/InputFormModal"; // Pastikan path ini benar
 import EditFormModal2 from '@/components/EditFormModal2';
+import LogoutButton from '@/components/LogoutButton';
 
 // --- TIPE DATA ---
 interface LogEntry {
@@ -29,10 +30,9 @@ interface LogEntry {
 
 interface UserDashboardProps {
   userName?: string;
-  onLogout?: () => void;
 }
 
-export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDashboardProps) {
+export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardProps) {
   // State Data
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,15 +139,12 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
               <div className="h-9 w-9 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200">
                 <User className="h-5 w-5 text-slate-600" />
               </div>
-              <Button 
+              <LogoutButton 
                 variant="ghost" 
                 size="icon"
-                onClick={onLogout}
                 className="text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                title="Keluar"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
+                showIcon={true}
+              />
             </div>
           </div>
         </div>

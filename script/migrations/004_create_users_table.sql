@@ -1,0 +1,17 @@
+-- Migration 004: Create users table with authentication fields
+
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(100) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user', 'owner')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index on email for faster lookups
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Create index on role for filtering
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
