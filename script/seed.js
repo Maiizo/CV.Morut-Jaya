@@ -16,7 +16,7 @@ async function seed() {
 
   try {
     // --- RUN DB DDL MIGRATIONS (idempotent) ---
-    console.log('🔧 Menjalankan DDL migrasi (jika perlu)...');
+    console.log('Menjalankan DDL migrasi (jika perlu)...');
     await client.query(`
       CREATE TABLE IF NOT EXISTS locations (
         id SERIAL PRIMARY KEY,
@@ -45,7 +45,7 @@ async function seed() {
     // Insert some default locations if table empty
     const locCount = await client.query('SELECT COUNT(*) FROM locations');
     if (parseInt(locCount.rows[0].count, 10) === 0) {
-      const defaultLocs = ['Lobby', 'Gudang', 'Lantai 1', 'Lantai 2', 'Toilet Pria', 'Toilet Wanita'];
+      const defaultLocs = ['Gudang', 'Lantai 1', 'Lantai 2'];
       for (const name of defaultLocs) {
         await client.query('INSERT INTO locations (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [name]);
       }
@@ -93,15 +93,11 @@ async function seed() {
     console.log('\n📋 Membuat daftar pekerjaan...');
 
     const tasks = [
-      'Sapu & Pel Lantai 1',
-      'Sapu & Pel Lantai 2',
-      'Bersihkan Toilet Pria',
-      'Bersihkan Toilet Wanita',
-      'Lap Kaca Jendela Depan',
-      'Buang Sampah',
-      'Jaga Lobby',
-      'Istirahat Makan Siang',
-      'Pulang / Clock Out'
+      'Paras',
+      'Spout',
+      'Pupuk',
+      'Kastrasi',
+      'Perbaikan pagar',
     ];
 
     for (const title of tasks) {
@@ -109,14 +105,14 @@ async function seed() {
       
       if (check.rows.length === 0) {
         await client.query('INSERT INTO task_definitions (title) VALUES ($1)', [title]);
-        console.log(`   ✅ Pekerjaan ditambah: ${title}`);
+        console.log(`Pekerjaan ditambah: ${title}`);
       } else {
-        console.log(`   ⚠️ Pekerjaan sudah ada: ${title}`);
+        console.log(`Pekerjaan sudah ada: ${title}`);
       }
     }
 
     // --- 3. SEED SATUAN (Units) ---
-    console.log('\n📏 Membuat daftar satuan...');
+    console.log('\n Membuat daftar satuan...');
     
     await client.query(`
       CREATE TABLE IF NOT EXISTS satuan (
@@ -126,17 +122,17 @@ async function seed() {
       );
     `);
 
-    const satuanList = ['cm', 'meter', 'hektar', 'biji', 'kg', 'liter', 'unit', 'buah', 'batang', 'lembar', 'lainnya'];
+    const satuanList = ['cm', 'meter', 'hektar', 'biji', 'kg', 'liter', 'unit', 'buah', 'batang', 'lembar'];
     
     for (const name of satuanList) {
       await client.query('INSERT INTO satuan (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [name]);
     }
-    console.log('   ✅ Satuan berhasil ditambahkan.');
+    console.log('Satuan berhasil ditambahkan.');
 
-    console.log('\n🎉 Seeding Selesai! Database sudah terisi.');
+    console.log('\needing Selesai! Database sudah terisi.');
 
   } catch (error) {
-    console.error('❌ Gagal Seeding:', error);
+    console.error('Gagal Seeding:', error);
   } finally {
     client.release();
     pool.end(); // Tutup koneksi
