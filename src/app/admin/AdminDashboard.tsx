@@ -220,9 +220,6 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
             Saat ini menampilkan <span className="font-bold">{processedLogs.length}</span> data.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-            <Button variant="outline" className="bg-white" onClick={onLogout}>Keluar</Button>
-        </div>
       </div>
 
       {/* --- STATS BAR --- */}

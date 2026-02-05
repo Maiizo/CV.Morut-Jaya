@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Pencil, Trash2, Plus, Building, MapPin, Briefcase, Scale, Users, X } from 'lucide-react';
+import AdminLayoutWrapper from '@/components/AdminLayoutWrapper';
 
 interface DataItem {
   id: number;
@@ -236,8 +237,9 @@ export default function MasterDataPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <AdminLayoutWrapper>
+      <div className="min-h-screen bg-slate-50 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
@@ -508,5 +510,6 @@ export default function MasterDataPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </AdminLayoutWrapper>
   );
 }

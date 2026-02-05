@@ -2,15 +2,14 @@
 
 import React from 'react';
 import AdminDashboard from './AdminDashboard';
-import { useRouter } from 'next/navigation';
+import AdminLayoutWrapper from '@/components/AdminLayoutWrapper';
 
 export default function AdminPage() {
-  const router = useRouter();
-
   return (
-    <AdminDashboard
-      userName="Administrator"
-      onLogout={() => router.push('/')}
-    />
+    <AdminLayoutWrapper>
+      <AdminDashboard
+        userName="Administrator"
+      />
+    </AdminLayoutWrapper>
   );
 }
