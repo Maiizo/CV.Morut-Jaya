@@ -103,6 +103,24 @@ async function seed() {
       }
     }
 
+    // --- 3. SEED SATUAN (Units) ---
+    console.log('\n📏 Membuat daftar satuan...');
+    
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS satuan (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
+
+    const satuanList = ['cm', 'meter', 'hektar', 'biji', 'kg', 'liter', 'unit', 'buah', 'batang', 'lembar', 'lainnya'];
+    
+    for (const name of satuanList) {
+      await client.query('INSERT INTO satuan (name) VALUES ($1) ON CONFLICT (name) DO NOTHING', [name]);
+    }
+    console.log('   ✅ Satuan berhasil ditambahkan.');
+
     console.log('\n🎉 Seeding Selesai! Database sudah terisi.');
 
   } catch (error) {

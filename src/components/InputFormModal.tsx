@@ -26,7 +26,8 @@ export default function InputFormModal() {
   const [tasks, setTasks] = useState<{ id: number; title: string }[]>([]);
   const [selectedTask, setSelectedTask] = useState("");
   const [location, setLocation] = useState("");
-  const [locationsList, setLocationsList] = useState<string[]>([]);
+  const [locationsList, setLocationsList] = useState<{ id: number; name: string }[]>([]);
+  const [satuanList, setSatuanList] = useState<{ id: number; name: string }[]>([]);
   const [partners, setPartners] = useState<string[]>([]);
   const [partnerInput, setPartnerInput] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -49,7 +50,8 @@ export default function InputFormModal() {
   }
   
   fetchTasks();
-  fetchLocations()
+  fetchLocations();
+  fetchSatuan();
 }, []);
 
   async function fetchLocations() {
@@ -58,10 +60,22 @@ export default function InputFormModal() {
       if (res.ok) {
         const data = await res.json();
         setLocationsList(data);
-        if (data.length > 0 && !location) setLocation(data[0]);
+        if (data.length > 0 && !location) setLocation(data[0].name);
       }
     } catch (error) {
       console.error('Gagal ambil lokasi:', error);
+    }
+  }
+
+  async function fetchSatuan() {
+    try {
+      const res = await fetch('/api/satuan');
+      if (res.ok) {
+        const data = await res.json();
+        setSatuanList(data);
+      }
+    } catch (error) {
+      console.error('Gagal ambil satuan:', error);
     }
   }
 
@@ -171,7 +185,7 @@ export default function InputFormModal() {
                   <SelectItem value="loading" disabled>Memuat lokasi...</SelectItem>
                 ) : (
                   locationsList.map((loc) => (
-                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>
                   ))
                 )}
               </SelectContent>
@@ -199,17 +213,13 @@ export default function InputFormModal() {
                   <SelectValue placeholder="Pilih satuan" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cm">cm</SelectItem>
-                  <SelectItem value="meter">meter</SelectItem>
-                  <SelectItem value="hektar">hektar</SelectItem>
-                  <SelectItem value="biji">biji</SelectItem>
-                  <SelectItem value="kg">kg</SelectItem>
-                  <SelectItem value="liter">liter</SelectItem>
-                  <SelectItem value="unit">unit</SelectItem>
-                  <SelectItem value="buah">buah</SelectItem>
-                  <SelectItem value="batang">batang</SelectItem>
-                  <SelectItem value="lembar">lembar</SelectItem>
-                  <SelectItem value="lainnya">lainnya</SelectItem>
+                  {satuanList.length === 0 ? (
+                    <SelectItem value="loading" disabled>Memuat satuan...</SelectItem>
+                  ) : (
+                    satuanList.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

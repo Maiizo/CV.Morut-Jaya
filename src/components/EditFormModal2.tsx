@@ -31,7 +31,7 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
   const [tasks, setTasks] = useState<{ id: number; title: string }[]>([]);
   const [selectedTask, setSelectedTask] = useState('');
   const [location, setLocation] = useState('');
-  const [locationsList, setLocationsList] = useState<string[]>([]);
+  const [locationsList, setLocationsList] = useState<{ id: number; name: string }[]>([]);
   const [partners, setPartners] = useState<string[]>([]);
   const [partnerInput, setPartnerInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -87,7 +87,7 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
         if (res.ok) {
           const data = await res.json();
           setLocationsList(data);
-          if (!location && data.length > 0) setLocation(data[0]);
+          if (!location && data.length > 0) setLocation(data[0].name);
         }
       } catch (err) {
         console.error('Gagal ambil lokasi:', err);
@@ -154,7 +154,7 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
 
         <form onSubmit={handleSubmit} className="grid gap-4 py-2">
           <div className="grid gap-2">
-            <Label className="text-right font-semibold text-gray-700 text-left">Jenis Pekerjaan</Label>
+            <Label className="font-semibold text-gray-700">Jenis Pekerjaan</Label>
                   <Select onValueChange={setSelectedTask} value={selectedTask} required>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Pilih Pekerjaan --" />
@@ -172,7 +172,7 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
           </div>
 
           <div className="grid gap-2">
-            <Label className="text-right font-semibold text-gray-700 text-left">Lokasi / Detail</Label>
+            <Label className="font-semibold text-gray-700">Lokasi / Detail</Label>
             <Select value={location} onValueChange={setLocation} required>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="-- Pilih Lokasi --" />
@@ -182,7 +182,7 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
                   <SelectItem value="loading" disabled>Memuat lokasi...</SelectItem>
                 ) : (
                   locationsList.map((loc) => (
-                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    <SelectItem key={loc.id} value={loc.name}>{loc.name}</SelectItem>
                   ))
                 )}
               </SelectContent>
@@ -190,7 +190,7 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
           </div>
 
           <div className="grid gap-2">
-            <Label className="text-right font-semibold text-gray-700 text-left">Rekan Kerja (opsional)</Label>
+            <Label className="font-semibold text-gray-700">Rekan Kerja (opsional)</Label>
             <div className="flex gap-2">
               <Input value={partnerInput} onChange={(e) => setPartnerInput(e.target.value)} placeholder="Tambah nama rekan, tekan +" />
               <Button type="button" onClick={addPartner}>+</Button>

@@ -261,7 +261,7 @@ export default function AdminDashboard({ userName = 'Admin', onLogout }: AdminDa
                     placeholder="Tambah jenis pekerjaan baru..." 
                     className="min-w-[200px]"
                 />
-                <Button type="submit" disabled={isSubmitting} size="sm" className="bg-blue-600 hover:bg-blue-700">
+                <Button type="submit" disabled={isSubmitting} size="sm" className="bg-blue-200 hover:bg-blue-400">
                     {isSubmitting ? "..." : "+"}
                 </Button>
             </form>

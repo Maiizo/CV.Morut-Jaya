@@ -23,6 +23,7 @@ interface LogEntry {
   tugas: string;
   lokasi: string;
   partner?: string; // Optional biar aman
+  status?: string;  // Optional biar aman
   nama?: string;    // Tambahan jika API mengembalikan nama
 }
 
@@ -38,6 +39,7 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
   
   // State Filter & Pagination
   const [selectedDate, setSelectedDate] = useState<string>('hari-ini');
+  const [selectedStatus, setSelectedStatus] = useState<string>('semua');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8; // Sedikit dikurangi biar pas di layar
 
@@ -55,6 +57,7 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
             tugas: item.custom_description ?? item.tugas ?? '',
             lokasi: item.location ?? item.lokasi ?? '',
             partner: item.partners ?? item.partner ?? '-', // support partners
+            status: 'Selesai', // Placeholder status (bisa disesuaikan logicnya nanti)
             nama: item.nama
           }));
           setLogs(formattedData);
@@ -70,6 +73,10 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
 
   // 2. FILTERING LOGIC
   const filteredData = logs.filter(item => {
+    // Filter Status (Logic Placeholder)
+    if (selectedStatus !== 'semua' && item.status !== selectedStatus) {
+      return false;
+    }
     // Filter Date bisa ditambahkan di sini nanti
     return true;
   });
@@ -91,7 +98,19 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-  // (No status-based styling required anymore)
+  // Helper Warna Status
+  const getStatusColor = (status: string = 'Selesai') => {
+    switch (status) {
+      case 'Selesai':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'Dalam Proses':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'Pending':
+        return 'bg-amber-100 text-amber-700 border-amber-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
@@ -145,9 +164,15 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
             bg="bg-blue-50"
           />
           <StatsCard 
+            icon={<Briefcase className="h-5 w-5 text-emerald-600" />}
+            label="Selesai"
+            value={filteredData.filter(i => i.status === 'Selesai').length}
+            bg="bg-emerald-50"
+          />
+          <StatsCard 
             icon={<Users className="h-5 w-5 text-indigo-600" />}
-            label="Dengan Rekan"
-            value={filteredData.filter(i => i.partner && i.partner !== '-').length}
+            label="Proses"
+            value={filteredData.filter(i => i.status === 'Dalam Proses').length}
             bg="bg-indigo-50"
           />
           {/* Tombol Input Cepat di Mobile (muncul di grid stats) */}
@@ -179,7 +204,20 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
               </Select>
             </div>
 
-            {/* (Status filter removed) */}
+            {/* Filter Status */}
+            <div className="relative w-full sm:w-48">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="pl-9 bg-slate-50 border-slate-200 focus:ring-blue-500">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="semua">Semua Status</SelectItem>
+                  <SelectItem value="Selesai">Selesai</SelectItem>
+                  <SelectItem value="Dalam Proses">Proses</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -199,13 +237,14 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
                     <th className="px-6 py-4">Tugas</th>
                       <th className="px-6 py-4">Lokasi</th>
                       <th className="px-6 py-4">Rekan</th>
+                      <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {currentData.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
+                      <td colSpan={6} className="px-6 py-10 text-center text-slate-400">
                         Belum ada data untuk ditampilkan.
                       </td>
                     </tr>
@@ -227,6 +266,11 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
                           </div>
                         </td>
                         <td className="px-6 py-4 text-slate-700">{item.partner && item.partner !== '-' ? item.partner : '-'}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(item.status)}`}>
+                            {item.status || 'Selesai'}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 text-right">
                           <button onClick={() => setEditItem(item)} className="text-slate-400 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg">
                             <Pencil className="h-4 w-4" />
@@ -247,7 +291,10 @@ export default function UserDashboard({ userName = 'Pekerja', onLogout }: UserDa
                 currentData.map((item) => (
                   <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
                     <div className="flex justify-between items-start">
-                        <div>
+                      <div>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border mb-2 ${getStatusColor(item.status)}`}>
+                          {item.status || 'Selesai'}
+                        </span>
                         <h3 className="font-bold text-slate-800 text-lg">{item.tugas}</h3>
                       </div>
                       <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded">

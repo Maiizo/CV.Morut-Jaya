@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import UserDashboard from './user/UserDashboard';
 import AdminDashboard from './admin/AdminDashboard';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Briefcase, ShieldCheck } from 'lucide-react';
 
@@ -11,12 +12,18 @@ type ViewMode = 'user' | 'admin' | 'login';
 export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('login');
 
+  const router = useRouter();
+
   const handleLogin = (mode: 'user' | 'admin') => {
-    setViewMode(mode);
+    // Navigate to proper route for each role
+    if (mode === 'admin') return router.push('/admin');
+    return router.push('/user');
   };
 
   const handleLogout = () => {
+    // keep legacy behavior if still on same page
     setViewMode('login');
+    router.push('/');
   };
 
   // Login Screen
