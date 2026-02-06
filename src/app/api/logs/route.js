@@ -1,6 +1,7 @@
 //
 import pool from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -45,14 +46,13 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Waktu log harus diisi' }, { status: 400 });
     }
 
-    // NOTE: belum ada mekanisme auth; gunakan user id default 1 sebagai logger
-    // Check if user exists first
-    const userCheck = await pool.query('SELECT id FROM users WHERE id = 1 LIMIT 1');
-    if (userCheck.rows.length === 0) {
-      console.error('Default user (id=1) tidak ditemukan. Silakan jalankan seed.js');
-      return NextResponse.json({ error: 'User default tidak ditemukan. Hubungi administrator.' }, { status: 500 });
+    // Get authenticated user
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      console.error('User tidak terautentikasi');
+      return NextResponse.json({ error: 'Anda harus login terlebih dahulu' }, { status: 401 });
     }
-    const loggerUserId = 1;
+    const loggerUserId = currentUser.id;
 
     // Try inserting including partners, quantity, satuan if provided; fallback to insert without partners on failure
     try {

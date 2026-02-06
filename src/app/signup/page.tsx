@@ -94,8 +94,8 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-green-100 p-4">
+      <Card className="w-full bg-white   max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Daftar Akun</CardTitle>
           <CardDescription className="text-center">
@@ -166,13 +166,13 @@ export default function SignupPage() {
               />
             </div>
             
-     
+      <div className="space-y-4"></div>
           </CardContent>
           
-          <CardFooter className="flex flex-col space-y-4">
-            <Button 
-              type="submit" 
-              className="w-full"
+          <CardFooter className="flex flex-col  space-y-4">
+            <Button
+              type="submit"
+              className="w-full bg-green-500 hover:bg-green-600 text-white"
               disabled={isLoading}
             >
               {isLoading ? 'Loading...' : 'Daftar'}

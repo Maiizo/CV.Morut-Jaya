@@ -65,8 +65,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-blue-100 p-4">
+      <Card className="w-full bg-white max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
           <CardDescription className="text-center">
@@ -108,14 +108,17 @@ export default function LoginPage() {
                 disabled={isLoading}
               />
             </div>
+
+             <div className="space-y-4"></div>
           </CardContent>
           
           <CardFooter className="flex flex-col space-y-4">
-            <Button 
-              type="submit" 
-              className="w-full"
+            <Button
+              type="submit"
+              className="w-full bg-blue-400 hover:bg-blue-500 text-white"
               disabled={isLoading}
             >
+              
               {isLoading ? 'Loading...' : 'Login'}
             </Button>
             
