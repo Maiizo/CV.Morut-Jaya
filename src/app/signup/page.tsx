@@ -166,25 +166,7 @@ export default function SignupPage() {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select 
-                value={formData.role} 
-                onValueChange={handleRoleChange}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">User (Staff)</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                User: Akses terbatas. Admin: Akses penuh ke dashboard admin.
-              </p>
-            </div>
+     
           </CardContent>
           
           <CardFooter className="flex flex-col space-y-4">
