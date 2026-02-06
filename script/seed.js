@@ -60,18 +60,11 @@ async function seed() {
     // Hash password untuk admin khusus
     const saltAdmin = await bcrypt.genSalt(10);
     const hashAdmin = await bcrypt.hash('admin123cvjlm', saltAdmin);
-    
-    // Password seragam untuk user lain: "123456"
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash('123456', salt);
+  
 
     // List User yang mau dibuat
     const users = [
-      { username: 'admincvjlm', email: 'admin@cvjlm.com', role: 'admin', password: hashAdmin },
-      { username: 'Bapak Owner', email: 'owner@kantor.com', role: 'owner', password: hash },
-      { username: 'Bu Admin', email: 'admin@kantor.com', role: 'admin', password: hash },
-      { username: 'Ujang (Staff)', email: 'ujang@kantor.com', role: 'user', password: hash },
-      { username: 'Siti (Staff)', email: 'siti@kantor.com', role: 'user', password: hash },
+      { username: 'admin', email: 'admin@gmail.com', role: 'admin', password: hashAdmin }
     ];
 
     for (const u of users) {

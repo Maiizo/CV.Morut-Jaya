@@ -74,6 +74,10 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
     label: string;
   }[]>([]);
   
+  // Date Range Filter State
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  
   const [sortConfig, setSortConfig] = useState<{ key: keyof Log; direction: 'asc' | 'desc' } | null>(null);
 
   // --- FETCH DATA ---
@@ -167,7 +171,23 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
       );
     }
 
-    // 2. Specific Column Filters (Drill Down)
+    // 2. Date Range Filter
+    if (fromDate) {
+      data = data.filter(item => {
+        const itemDate = new Date(item.tanggal);
+        const from = new Date(fromDate);
+        return itemDate >= from;
+      });
+    }
+    if (toDate) {
+      data = data.filter(item => {
+        const itemDate = new Date(item.tanggal);
+        const to = new Date(toDate);
+        return itemDate <= to;
+      });
+    }
+
+    // 3. Specific Column Filters (Drill Down)
     activeFilters.forEach(filter => {
       data = data.filter(item => {
         const itemValue = String(item[filter.key as keyof Log] || '');
@@ -180,7 +200,7 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
       });
     });
 
-    // 3. Sorting
+    // 4. Sorting
     if (sortConfig) {
       data.sort((a, b) => {
         const valA = (a[sortConfig.key] || '').toString().toLowerCase();
@@ -193,7 +213,7 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
     }
 
     return data;
-  }, [logs, searchQuery, activeFilters, sortConfig]);
+  }, [logs, searchQuery, activeFilters, sortConfig, fromDate, toDate]);
 
 
   // --- RENDER HELPERS ---
@@ -227,18 +247,7 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
           />
         </div>
       </div>
-
-      {/* --- STATS BAR --- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="shadow-sm border-blue-100 bg-blue-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Total Log Ditampilkan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-900">{processedLogs.length}</div>
-          </CardContent>
-        </Card>
-      </div>
+      
 
       {/* --- CONTROLS AREA --- */}
       <div className="space-y-4">
@@ -261,21 +270,79 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
                 <Input 
                     value={newTaskTitle} 
                     onChange={(e) => setNewTaskTitle(e.target.value)}
-                    placeholder="Tambah jenis pekerjaan baru..." 
+                    placeholder="Tambah jenis pekerjaan baru" 
                     className="min-w-[200px]"
                 />
-                <Button type="submit" disabled={isSubmitting} size="sm" className="bg-blue-200 hover:bg-blue-400">
+                <Button type="submit" disabled={isSubmitting} size="sm" className="bg-blue-300 hover:bg-blue-400">
                     {isSubmitting ? "..." : "+"}
                 </Button>
             </form>
         </div>
 
+        {/* Date Range Filter */}
+        <div className="flex flex-col md:flex-row gap-4 items-end md:items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-slate-500" />
+                <span className="text-sm font-medium text-slate-600">Filter Tanggal:</span>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 items-end sm:items-center flex-1">
+                <div className="flex flex-col gap-1 w-full sm:w-auto">
+                    <label className="text-xs text-slate-500 font-medium">Dari</label>
+                    <Input 
+                        type="date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                        className="w-full sm:w-40"
+                    />
+                </div>
+                <span className="text-slate-400 hidden sm:block">—</span>
+                <div className="flex flex-col gap-1 w-full sm:w-auto">
+                    <label className="text-xs text-slate-500 font-medium">Sampai</label>
+                    <Input 
+                        type="date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        className="w-full sm:w-40"
+                    />
+                </div>
+                {(fromDate || toDate) && (
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs text-slate-500 hover:text-red-600"
+                        onClick={() => { setFromDate(""); setToDate(""); }}
+                    >
+                        <X className="h-3 w-3 mr-1" />
+                        Reset
+                    </Button>
+                )}
+            </div>
+        </div>
+
         {/* Active Filters Display */}
-        {(activeFilters.length > 0 || searchQuery) && (
+        {(activeFilters.length > 0 || searchQuery || fromDate || toDate) && (
             <div className="flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-top-2">
                 <span className="text-sm font-medium text-slate-500 mr-2 flex items-center gap-1">
                     <Filter className="h-3 w-3" /> Filter Aktif:
                 </span>
+                
+                {fromDate && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                        Dari: {fromDate}
+                        <button onClick={() => setFromDate("")} className="hover:text-red-500 ml-1">
+                            <X className="h-3 w-3" />
+                        </button>
+                    </span>
+                )}
+                
+                {toDate && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                        Sampai: {toDate}
+                        <button onClick={() => setToDate("")} className="hover:text-red-500 ml-1">
+                            <X className="h-3 w-3" />
+                        </button>
+                    </span>
+                )}
                 
                 {activeFilters.map((filter, idx) => (
                     <span key={idx} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
@@ -290,7 +357,7 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
                     variant="ghost" 
                     size="sm" 
                     className="text-xs text-slate-500 hover:text-red-600"
-                    onClick={() => { setActiveFilters([]); setSearchQuery(""); }}
+                    onClick={() => { setActiveFilters([]); setSearchQuery(""); setFromDate(""); setToDate(""); }}
                 >
                     Reset Semua
                 </Button>

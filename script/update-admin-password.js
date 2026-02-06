@@ -12,7 +12,7 @@ const pool = new Pool({
 
 async function updateAdminPassword() {
   try {
-    console.log('🔄 Updating admin password...');
+    console.log('Updating admin password...');
     
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash('admin123cvjlm', salt);
@@ -23,17 +23,17 @@ async function updateAdminPassword() {
     );
     
     if (result.rows.length > 0) {
-      console.log('✅ Password admin berhasil diupdate!');
-      console.log('   Username:', result.rows[0].username);
-      console.log('   Email:', result.rows[0].email);
-      console.log('   Password: admin123cvjlm');
+      console.log('Password admin berhasil diupdate!');
+      console.log('Username:', result.rows[0].username);
+      console.log('Email:', result.rows[0].email);
+      console.log('Password: admin123cvjlm');
     } else {
-      console.log('⚠️ Admin user tidak ditemukan!');
+      console.log(' Admin user tidak ditemukan!');
     }
     
     await pool.end();
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('Error:', error.message);
     process.exit(1);
   }
 }
