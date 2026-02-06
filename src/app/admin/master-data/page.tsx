@@ -310,7 +310,6 @@ export default function MasterDataPage() {
                         >
                           <option value="user">User</option>
                           <option value="admin">Admin</option>
-                          <option value="owner">Owner</option>
                         </select>
                       </div>
                       <Button 
@@ -452,7 +451,6 @@ export default function MasterDataPage() {
                     >
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
-                      <option value="owner">Owner</option>
                     </select>
                   </div>
                 </>

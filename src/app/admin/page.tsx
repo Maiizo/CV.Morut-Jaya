@@ -5,9 +5,16 @@ import { useRouter } from 'next/navigation';
 import AdminDashboard from './AdminDashboard';
 import AdminLayoutWrapper from '@/components/AdminLayoutWrapper';
 
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+}
+
 export default function AdminPage() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -21,8 +28,8 @@ export default function AdminPage() {
           return;
         }
 
-        // Check if user has admin or owner role
-        if (data.user.role !== 'admin' && data.user.role !== 'owner') {
+        // Check if user has admin role
+        if (data.user.role !== 'admin') {
           // Redirect non-admin users to user dashboard
           router.push('/user');
           return;

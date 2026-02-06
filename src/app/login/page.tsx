@@ -49,7 +49,7 @@ export default function LoginPage() {
       }
 
       // Redirect based on user role
-      if (data.user.role === 'admin' || data.user.role === 'owner') {
+      if (data.user.role === 'admin') {
         router.push('/admin');
       } else {
         router.push('/user');

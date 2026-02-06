@@ -85,7 +85,7 @@ export async function isAuthenticated() {
  */
 export async function isAdmin() {
   const user = await getCurrentUser();
-  return user?.role === 'admin' || user?.role === 'owner';
+  return user?.role === 'admin';
 }
 
 /**

@@ -78,7 +78,7 @@ export default function SignupPage() {
       }
 
       // Redirect based on user role
-      if (data.user.role === 'admin' || data.user.role === 'owner') {
+      if (data.user.role === 'admin') {
         router.push('/admin');
       } else {
         router.push('/user');
@@ -179,11 +179,10 @@ export default function SignupPage() {
                 <SelectContent>
                   <SelectItem value="user">User (Staff)</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="owner">Owner</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-gray-500">
-                User: Akses terbatas. Admin/Owner: Akses penuh ke dashboard admin.
+                User: Akses terbatas. Admin: Akses penuh ke dashboard admin.
               </p>
             </div>
           </CardContent>

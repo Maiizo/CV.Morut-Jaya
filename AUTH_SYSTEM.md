@@ -7,7 +7,7 @@ This application now has a complete login and signup system with role-based acce
 - ✅ User registration (signup)
 - ✅ User authentication (login)
 - ✅ Session management with HTTP-only cookies
-- ✅ Role-based access control (Admin, Owner, User)
+- ✅ Role-based access control (Admin, User)
 - ✅ Protected routes with middleware
 - ✅ Password hashing with bcrypt
 - ✅ Automatic role-based redirects
@@ -15,7 +15,6 @@ This application now has a complete login and signup system with role-based acce
 ## User Roles
 1. **User (Staff)**: Regular staff members with limited access
 2. **Admin**: Administrative users with full access to admin dashboard
-3. **Owner**: Owner/manager with full access (same as Admin)
 
 ## Pages & Routes
 
@@ -25,7 +24,7 @@ This application now has a complete login and signup system with role-based acce
 - `/signup` - Registration page
 
 ### Protected Routes
-- `/admin` - Admin dashboard (requires admin or owner role)
+- `/admin` - Admin dashboard (requires admin role)
 - `/user` - User dashboard (requires any authenticated user)
 
 ### API Routes
@@ -65,7 +64,7 @@ CREATE TABLE users (
    - Email address
    - Password (minimum 6 characters)
    - Confirm password
-   - Select role (User, Admin, or Owner)
+   - Select role (User or Admin)
 3. Click "Daftar"
 4. You'll be automatically logged in and redirected based on your role
 
@@ -74,7 +73,7 @@ CREATE TABLE users (
 2. Enter your email and password
 3. Click "Login"
 4. You'll be redirected to:
-   - `/admin` if you're an admin or owner
+   - `/admin` if you're an admin
    - `/user` if you're a regular user
 
 ### 3. Logout
@@ -86,7 +85,6 @@ After running `npm run seed`, these accounts are available (password: `123456`):
 
 | Username | Email | Role | Password |
 |----------|-------|------|----------|
-| Bapak Owner | owner@kantor.com | owner | 123456 |
 | Bu Admin | admin@kantor.com | admin | 123456 |
 | Ujang (Staff) | ujang@kantor.com | user | 123456 |
 | Siti (Staff) | siti@kantor.com | user | 123456 |
@@ -142,7 +140,7 @@ User visits /login
   → Create session
   → Set HTTP-only cookie
   → Redirect based on role
-    → Admin/Owner → /admin
+    → Admin → /admin
     → User → /user
 ```
 

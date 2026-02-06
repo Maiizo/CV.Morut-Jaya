@@ -53,7 +53,7 @@ export async function POST(request) {
     const userRole = role || 'user';
     
     // Validate role
-    if (!['admin', 'user', 'owner'].includes(userRole)) {
+    if (!['admin', 'user'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Role tidak valid' },
         { status: 400 }

@@ -18,7 +18,7 @@ export default function HomePage() {
           const data = await response.json();
           if (data.authenticated && data.user) {
             // Redirect based on role
-            if (data.user.role === 'admin' || data.user.role === 'owner') {
+            if (data.user.role === 'admin') {
               router.push('/admin');
             } else {
               router.push('/user');
