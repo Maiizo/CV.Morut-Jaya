@@ -4,9 +4,16 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import UserDashboard from './UserDashboard';
 
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+}
+
 export default function UserPage() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -48,7 +55,7 @@ export default function UserPage() {
 
   return (
     <UserDashboard
-      userName={user.username || 'Pekerja'}
+      userName={user.username || 'User'}
     />
   );
 }

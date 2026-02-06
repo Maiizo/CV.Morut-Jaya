@@ -53,12 +53,6 @@ export default function AdminSidebar({
       icon: <FileText className="h-5 w-5" />,
       path: '/admin/ringkasan-harian',
       description: 'Laporan Harian'
-    },
-    {
-      label: 'Manage Dropdowns',
-      icon: <ListChecks className="h-5 w-5" />,
-      path: '/admin/manage-dropdowns',
-      description: 'Kelola Dropdown'
     }
   ];
 
