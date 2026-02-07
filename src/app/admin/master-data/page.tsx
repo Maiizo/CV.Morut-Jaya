@@ -238,22 +238,22 @@ export default function MasterDataPage() {
 
   return (
     <AdminLayoutWrapper>
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="min-h-screen bg-slate-50 p-4 md:p-6">
         <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-blue-600 p-3 rounded-xl shadow-lg">
-            <Building className="h-6 w-6 text-white" />
+        {/* Header - Mobile Optimized */}
+        <div className="flex items-center gap-3 mb-6 md:mb-8">
+          <div className="bg-blue-600 p-2.5 md:p-3 rounded-xl shadow-lg">
+            <Building className="h-5 w-5 md:h-6 md:w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">Master Data</h1>
-            <p className="text-slate-500">Kelola semua data referensi sistem</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-800">Master Data</h1>
+            <p className="text-sm md:text-base text-slate-500">Kelola semua data referensi sistem</p>
           </div>
         </div>
 
-        {/* Grid of sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Grid of sections - Mobile Optimized */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {sections.map(section => {
             const items = data[section.key];
             const isLoading = loading[section.key];
@@ -268,45 +268,45 @@ export default function MasterDataPage() {
               <div key={section.key} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 
                 {/* Section Header */}
-                <div className={`${colorClasses[section.color as keyof typeof colorClasses]} text-white p-4 flex items-center gap-3`}>
-                  {section.icon}
-                  <h2 className="text-lg font-semibold">{section.title}</h2>
-                  <span className="ml-auto bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                <div className={`${colorClasses[section.color as keyof typeof colorClasses]} text-white p-4 md:p-5 flex items-center gap-3`}>
+                  <div className="flex-shrink-0">{section.icon}</div>
+                  <h2 className="text-base md:text-lg font-semibold flex-1">{section.title}</h2>
+                  <span className="bg-white/20 px-3 py-1.5 rounded-full text-sm font-medium">
                     {items.length}
                   </span>
                 </div>
 
-                {/* Add Form */}
-                <div className="p-4 bg-slate-50 border-b border-slate-200">
+                {/* Add Form - Mobile Optimized */}
+                <div className="p-4 md:p-5 bg-slate-50 border-b border-slate-200">
                   {section.key === 'users' ? (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Input 
                           placeholder="Username" 
                           value={userForm.username}
                           onChange={(e) => setUserForm(prev => ({ ...prev, username: e.target.value }))}
-                          className="text-sm"
+                          className="h-11 text-base"
                         />
                         <Input 
                           placeholder="Email" 
                           type="email"
                           value={userForm.email}
                           onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
-                          className="text-sm"
+                          className="h-11 text-base"
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Input 
                           placeholder="Password" 
                           type="password"
                           value={userForm.password}
                           onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))}
-                          className="text-sm"
+                          className="h-11 text-base"
                         />
                         <select 
                           value={userForm.role}
                           onChange={(e) => setUserForm(prev => ({ ...prev, role: e.target.value }))}
-                          className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                          className="flex h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-base"
                         >
                           <option value="user">User</option>
                           <option value="admin">Admin</option>
@@ -314,8 +314,7 @@ export default function MasterDataPage() {
                       </div>
                       <Button 
                         onClick={() => handleAdd(section.key, section.apiEndpoint, section.nameField)}
-                        size="sm"
-                        className="w-full bg-slate-700 hover:bg-slate-800 text-white"
+                        className="w-full h-11 text-base bg-slate-700 hover:bg-slate-800 text-white font-medium"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Tambah User
@@ -332,39 +331,38 @@ export default function MasterDataPage() {
                             handleAdd(section.key, section.apiEndpoint, section.nameField);
                           }
                         }}
-                        className="flex-1"
+                        className="flex-1 h-11 text-base"
                       />
                       <Button 
                         onClick={() => handleAdd(section.key, section.apiEndpoint, section.nameField)}
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="h-11 w-11 p-0 bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-5 w-5" />
                       </Button>
                     </div>
                   )}
                 </div>
 
-                {/* Items List */}
+                {/* Items List - Mobile Optimized */}
                 <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
                   {isLoading ? (
-                    <div className="p-6 text-center text-slate-400">Memuat...</div>
+                    <div className="p-8 text-center text-slate-400">Memuat...</div>
                   ) : items.length === 0 ? (
-                    <div className="p-6 text-center text-slate-400">Belum ada data</div>
+                    <div className="p-8 text-center text-slate-400">Belum ada data</div>
                   ) : (
                     items.map(item => (
-                      <div key={item.id} className="p-3 hover:bg-slate-50 transition-colors group flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="font-medium text-slate-800">
+                      <div key={item.id} className="p-4 md:p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors group flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-slate-800 text-sm md:text-base truncate">
                             {getDisplayName(item, section.nameField)}
                           </div>
                           {section.key === 'users' && (
-                            <div className="text-xs text-slate-500 mt-1">
-                              Role: <span className="font-medium">{item.role}</span>
+                            <div className="text-xs md:text-sm text-slate-500 mt-1">
+                              Role: <span className="font-medium capitalize">{item.role}</span>
                             </div>
                           )}
                         </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1 md:gap-2 flex-shrink-0">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -374,17 +372,17 @@ export default function MasterDataPage() {
                               item: { ...item },
                               section 
                             })}
-                            className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                            className="h-9 w-9 md:h-10 md:w-10 p-0 hover:bg-blue-50 hover:text-blue-600"
                           >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setDeleteModal({ isOpen: true, type: section.key, item })}
-                            className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                            className="h-9 w-9 md:h-10 md:w-10 p-0 hover:bg-red-50 hover:text-red-600"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>

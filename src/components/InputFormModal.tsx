@@ -133,30 +133,30 @@ export default function InputFormModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all">
+        <Button className="w-full md:w-auto h-12 md:h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 rounded-lg shadow-md transition-all text-base">
           + Catat Pekerjaan Baru
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[425px] bg-white rounded-xl">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-center text-gray-800">
+          <DialogTitle className="text-xl md:text-2xl font-bold text-center text-gray-800">
             Form Laporan Kerja
           </DialogTitle>
-          <p className="text-center text-gray-500 text-sm">
+          <p className="text-center text-gray-500 text-sm md:text-base">
             Isi data pekerjaan yang baru saja kamu selesaikan.
           </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="grid gap-6 py-4">
+        <form onSubmit={handleSubmit} className="grid gap-5 md:gap-6 py-4">
           
           {/* INPUT 1: JENIS PEKERJAAN (Dropdown) */}
           <div className="grid gap-2">
-            <Label htmlFor="task" className="text-right font-semibold text-gray-700 text-left">
+            <Label htmlFor="task" className="font-semibold text-gray-700 text-sm md:text-base">
               Jenis Pekerjaan
             </Label>
             <Select onValueChange={setSelectedTask} required>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full h-11 text-base">
                 <SelectValue placeholder="-- Pilih Pekerjaan --" />
               </SelectTrigger>
               <SelectContent>
@@ -175,11 +175,11 @@ export default function InputFormModal() {
 
           {/* INPUT 2: LOKASI / KETERANGAN */}
           <div className="grid gap-2">
-            <Label htmlFor="lokasi" className="text-right font-semibold text-gray-700 text-left">
+            <Label htmlFor="lokasi" className="font-semibold text-gray-700 text-sm md:text-base">
               Lokasi / Detail
             </Label>
             <Select value={location} onValueChange={setLocation} required>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full h-11 text-base">
                 <SelectValue placeholder="-- Pilih Lokasi --" />
               </SelectTrigger>
               <SelectContent>
@@ -195,23 +195,24 @@ export default function InputFormModal() {
           </div>
 
           {/* INPUT 3: QUANTITY & SATUAN */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 md:gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="quantity" className="text-right font-semibold text-gray-700 text-left">Jumlah</Label>
+              <Label htmlFor="quantity" className="font-semibold text-gray-700 text-sm md:text-base">Jumlah</Label>
               <Input
                 id="quantity"
                 type="number"
                 min="0"
                 value={quantity}
                 onChange={e => setQuantity(e.target.value)}
-                placeholder="Masukkan jumlah"
+                placeholder="Jumlah"
+                className="h-11 text-base"
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="satuan" className="text-right font-semibold text-gray-700 text-left">Satuan</Label>
+              <Label htmlFor="satuan" className="font-semibold text-gray-700 text-sm md:text-base">Satuan</Label>
               <Select value={satuan} onValueChange={setSatuan} required>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-11 text-base">
                   <SelectValue placeholder="Pilih satuan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,14 +230,24 @@ export default function InputFormModal() {
 
           {/* INPUT 4: PARTNERS (Optional, multiple) */}
           <div className="grid gap-2">
-            <Label className="text-right font-semibold text-gray-700 text-left">Rekan Kerja (opsional)</Label>
+            <Label className="font-semibold text-gray-700 text-sm md:text-base">Rekan Kerja (opsional)</Label>
             <div className="flex gap-2">
-              <Input value={partnerInput} onChange={(e) => setPartnerInput(e.target.value)} placeholder="Tambah nama rekan, tekan +" />
-              <Button type="button" onClick={addPartner}>+</Button>
+              <Input 
+                value={partnerInput} 
+                onChange={(e) => setPartnerInput(e.target.value)} 
+                placeholder="Tambah nama rekan" 
+                className="h-11 text-base"
+              />
+              <Button type="button" onClick={addPartner} className="h-11 w-11 p-0 flex-shrink-0">+</Button>
             </div>
             <div className="flex gap-2 mt-2 flex-wrap">
               {partners.map((p, i) => (
-                <button key={i} type="button" onClick={() => removePartner(i)} className="px-2 py-1 bg-slate-100 rounded-full text-sm border">
+                <button 
+                  key={i} 
+                  type="button" 
+                  onClick={() => removePartner(i)} 
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-full text-sm border border-slate-200 active:bg-slate-300 transition-colors"
+                >
                   {p} ×
                 </button>
               ))}
@@ -244,11 +255,11 @@ export default function InputFormModal() {
           </div>
 
           {/* TOMBOL SIMPAN */}
-          <DialogFooter>
+          <DialogFooter className="mt-2">
             <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-2"
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold"
             >
               {loading ? "Menyimpan..." : "Simpan Laporan"}
             </Button>

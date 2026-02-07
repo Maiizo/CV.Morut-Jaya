@@ -126,7 +126,7 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
               </div>
               <div>
                 <h1 className="text-lg font-bold text-slate-800 leading-tight">Portal Kerja</h1>
-                <p className="text-xs text-slate-500 font-medium">CV. Morut Jaya</p>
+                <p className="text-xs text-slate-500 font-medium">CV. Jaya Lestari Morut</p>
               </div>
             </div>
 
@@ -153,44 +153,50 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         
         {/* --- STATISTIK RINGKAS --- */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <StatsCard 
-            icon={<Clock className="h-5 w-5 text-blue-600" />}
+            icon={<Clock className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />}
             label="Total Log"
             value={filteredData.length}
             bg="bg-blue-50"
           />
           <StatsCard 
-            icon={<Briefcase className="h-5 w-5 text-emerald-600" />}
+            icon={<Briefcase className="h-5 w-5 md:h-6 md:w-6 text-emerald-600" />}
             label="Selesai"
             value={filteredData.filter(i => i.status === 'Selesai').length}
             bg="bg-emerald-50"
           />
           <StatsCard 
-            icon={<Users className="h-5 w-5 text-indigo-600" />}
+            icon={<Users className="h-5 w-5 md:h-6 md:w-6 text-indigo-600" />}
             label="Proses"
             value={filteredData.filter(i => i.status === 'Dalam Proses').length}
             bg="bg-indigo-50"
           />
-          {/* Tombol Input Cepat di Mobile (muncul di grid stats) */}
-          <div className="md:hidden col-span-1 flex flex-col justify-center">
-             <InputFormModal />
-          </div>
+          <StatsCard 
+            icon={<MapPin className="h-5 w-5 md:h-6 md:w-6 text-amber-600" />}
+            label="Lokasi"
+            value={new Set(filteredData.map(i => i.lokasi)).size}
+            bg="bg-amber-50"
+          />
         </div>
 
-        {/* --- ACTION BAR (Filter & Tombol) --- */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          {/* Tombol Input Desktop */}
-          <div className="hidden md:block">
+        {/* --- ACTION BAR (Filter & Tombol) - Mobile Optimized --- */}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          {/* Tombol Input - Full Width on Mobile */}
+          <div className="w-full">
             <InputFormModal />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          {/* Filters - Full Width Stacked on Mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Filter Tanggal */}
-            <div className="relative w-full sm:w-48">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-slate-500" />
+                Periode Waktu
+              </label>
               <Select value={selectedDate} onValueChange={setSelectedDate}>
-                <SelectTrigger className="pl-9 bg-slate-50 border-slate-200 focus:ring-blue-500">
+                <SelectTrigger className="h-11 bg-slate-50 border-slate-200 focus:ring-blue-500 text-base">
                   <SelectValue placeholder="Pilih Waktu" />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,16 +208,19 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
             </div>
 
             {/* Filter Status */}
-            <div className="relative w-full sm:w-48">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+                <Filter className="h-4 w-4 text-slate-500" />
+                Status Pekerjaan
+              </label>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="pl-9 bg-slate-50 border-slate-200 focus:ring-blue-500">
+                <SelectTrigger className="h-11 bg-slate-50 border-slate-200 focus:ring-blue-500 text-base">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="semua">Semua Status</SelectItem>
                   <SelectItem value="Selesai">Selesai</SelectItem>
-                  <SelectItem value="Dalam Proses">Proses</SelectItem>
+                  <SelectItem value="Dalam Proses">Dalam Proses</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -280,38 +289,50 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
               </table>
             </div>
 
-            {/* 2. TAMPILAN MOBILE (KARTU) - Lebih nyaman dibaca di HP */}
-            <div className="md:hidden space-y-4">
+            {/* 2. TAMPILAN MOBILE (KARTU) - Improved */}
+            <div className="md:hidden space-y-3">
               {currentData.length === 0 ? (
                 <div className="text-center py-10 text-slate-400">Belum ada data.</div>
               ) : (
                 currentData.map((item) => (
-                  <div key={item.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border mb-2 ${getStatusColor(item.status)}`}>
-                          {item.status || 'Selesai'}
-                        </span>
-                        <h3 className="font-bold text-slate-800 text-lg">{item.tugas}</h3>
-                      </div>
-                      <span className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded">
+                  <div key={item.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3 active:bg-slate-50 transition-colors">
+                    {/* Header Row */}
+                    <div className="flex justify-between items-start gap-3">
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm ${getStatusColor(item.status)}`}>
+                        {item.status || 'Selesai'}
+                      </span>
+                      <span className="text-sm font-bold font-mono text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
                         {item.jam}
                       </span>
                     </div>
                     
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <MapPin className="h-4 w-4 text-slate-400" />
-                      <div>
-                        <div>{item.lokasi}</div>
-                        {item.partner && item.partner !== '-' && (
-                          <div className="text-xs text-slate-400">Rekan: {item.partner}</div>
-                        )}
+                    {/* Task Title */}
+                    <h3 className="font-bold text-slate-900 text-lg leading-tight">{item.tugas}</h3>
+                    
+                    {/* Location & Partner */}
+                    <div className="space-y-2 pt-2 border-t border-slate-100">
+                      <div className="flex items-start gap-2 text-sm text-slate-600">
+                        <MapPin className="h-5 w-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <div className="font-medium">{item.lokasi}</div>
+                          {item.partner && item.partner !== '-' && (
+                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              Rekan: {item.partner}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="pt-3 mt-1 border-t border-slate-100 flex justify-end">
-                      <Button onClick={() => setEditItem(item)} variant="outline" size="sm" className="text-xs h-8">
-                        <Pencil className="h-3 w-3 mr-2" />
+                    {/* Action Button */}
+                    <div className="pt-3 border-t border-slate-100">
+                      <Button 
+                        onClick={() => setEditItem(item)} 
+                        variant="outline" 
+                        className="w-full h-11 text-base font-medium text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
                         Edit Laporan
                       </Button>
                     </div>
@@ -323,27 +344,33 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
             {/* Edit Modal */}
             <EditFormModal2 item={editItem} onClose={() => setEditItem(null)} onSaved={handleSaved} />
 
-            {/* PAGINATION */}
+            {/* PAGINATION - Mobile Optimized */}
             {totalPages > 1 && (
-              <div className="flex justify-between items-center pt-4 border-t border-slate-200 mt-6">
+              <div className="flex justify-between items-center gap-4 pt-4 border-t border-slate-200 mt-6 bg-white p-4 rounded-xl">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="lg"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
+                  className="h-11 px-4 md:px-6"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-1" /> Prev
+                  <ChevronLeft className="h-4 w-4 mr-1" /> 
+                  <span className="hidden sm:inline">Prev</span>
+                  <span className="sm:hidden">‹</span>
                 </Button>
-                <span className="text-sm text-slate-500 font-medium">
-                  Hal {currentPage} dari {totalPages}
+                <span className="text-sm md:text-base text-slate-700 font-semibold px-2">
+                  Hal <span className="text-blue-600">{currentPage}</span> / {totalPages}
                 </span>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="lg"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
+                  className="h-11 px-4 md:px-6"
                 >
-                  Next <ChevronRight className="h-4 w-4 ml-1" />
+                  <span className="hidden sm:inline">Next</span>
+                  <span className="sm:hidden">›</span>
+                  <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
             )}
@@ -357,13 +384,15 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
 // --- KOMPONEN KECIL (Helper) ---
 function StatsCard({ icon, label, value, bg }: any) {
   return (
-    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-      <div className={`p-3 rounded-lg ${bg}`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{label}</p>
-        <p className="text-2xl font-bold text-slate-800">{value}</p>
+    <div className="bg-white p-4 md:p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-3 md:gap-4">
+        <div className={`p-2 md:p-3 rounded-lg ${bg} flex-shrink-0`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wide truncate">{label}</p>
+          <p className="text-xl md:text-2xl font-bold text-slate-800 mt-0.5">{value}</p>
+        </div>
       </div>
     </div>
   );

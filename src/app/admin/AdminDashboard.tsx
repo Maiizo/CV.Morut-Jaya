@@ -14,7 +14,8 @@ import {
   User, 
   MapPin, 
   Calendar, 
-  Search
+  Search,
+  Plus
 } from 'lucide-react'; 
 
 interface Log {
@@ -231,19 +232,20 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
   return (
     <div className="min-h-screen bg-slate-50/50 p-6 space-y-8 font-sans text-slate-900">
       
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* HEADER - Mobile Optimized */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Dashboard Utama</h1>
-          <p className="text-slate-500">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">Dashboard Utama</h1>
+          <p className="text-sm md:text-base text-slate-500 mt-1">
             Halo, <span className="font-semibold text-blue-600">{userName}</span>. 
-            Saat ini menampilkan <span className="font-bold">{processedLogs.length}</span> data.
+            Menampilkan <span className="font-bold text-blue-600">{processedLogs.length}</span> data.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <LogoutButton 
             variant="outline"
-            className="text-slate-600 hover:text-red-600 hover:border-red-300"
+            size="lg"
+            className="h-11 text-slate-600 hover:text-red-600 hover:border-red-300"
           />
         </div>
       </div>
@@ -252,70 +254,84 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
       {/* --- CONTROLS AREA --- */}
       <div className="space-y-4">
         
-        {/* Search & Add Task */}
-        <div className="flex flex-col md:flex-row gap-4 items-end md:items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            {/* Search Bar */}
-            <div className="relative w-full md:w-96">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        {/* Search & Add Task - Mobile Optimized */}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            {/* Search Bar - Full Width on Mobile */}
+            <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input 
                     placeholder="Cari nama, tugas, atau lokasi..." 
-                    className="pl-9 bg-slate-50"
+                    className="pl-11 h-12 text-base bg-slate-50"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
 
-            {/* Quick Add Task */}
-            <form onSubmit={handleAddTask} className="flex w-full md:w-auto gap-2 items-center">
+            {/* Quick Add Task - Full Width on Mobile */}
+            <form onSubmit={handleAddTask} className="flex gap-2">
                 <Input 
                     value={newTaskTitle} 
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                     placeholder="Tambah jenis pekerjaan baru" 
-                    className="min-w-[200px]"
+                    className="flex-1 h-12 text-base"
                 />
-                <Button type="submit" disabled={isSubmitting} size="sm" className="bg-blue-300 hover:bg-blue-400">
-                    {isSubmitting ? "..." : "+"}
+                <Button type="submit" disabled={isSubmitting} className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium">
+                    {isSubmitting ? "..." : <><Plus className="h-4 w-4 mr-2" /> Tambah</>}
                 </Button>
             </form>
         </div>
 
-        {/* Date Range Filter */}
-        <div className="flex flex-col md:flex-row gap-4 items-end md:items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-slate-500" />
-                <span className="text-sm font-medium text-slate-600">Filter Tanggal:</span>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 items-end sm:items-center flex-1">
-                <div className="flex flex-col gap-1 w-full sm:w-auto">
-                    <label className="text-xs text-slate-500 font-medium">Dari</label>
-                    <Input 
-                        type="date"
-                        value={fromDate}
-                        onChange={(e) => setFromDate(e.target.value)}
-                        className="w-full sm:w-40"
-                    />
+        {/* Date Range Filter - Mobile Optimized */}
+        <div className="bg-white p-4 md:p-4 rounded-xl border border-slate-200 shadow-sm">
+            {/* Mobile: Stacked Layout with Better Spacing */}
+            <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-center gap-2">
+                    <div className="bg-blue-50 p-2 rounded-lg">
+                        <Calendar className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <span className="text-base font-semibold text-slate-700">Filter Tanggal</span>
                 </div>
-                <span className="text-slate-400 hidden sm:block">—</span>
-                <div className="flex flex-col gap-1 w-full sm:w-auto">
-                    <label className="text-xs text-slate-500 font-medium">Sampai</label>
-                    <Input 
-                        type="date"
-                        value={toDate}
-                        onChange={(e) => setToDate(e.target.value)}
-                        className="w-full sm:w-40"
-                    />
+                
+                {/* Date Inputs - Full Width on Mobile */}
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto] gap-3 md:gap-4 items-end">
+                    {/* From Date */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-slate-600 block">Dari Tanggal</label>
+                        <Input 
+                            type="date"
+                            value={fromDate}
+                            onChange={(e) => setFromDate(e.target.value)}
+                            className="w-full h-11 text-base"
+                        />
+                    </div>
+                    
+                    <span className="text-slate-400 text-center py-2 hidden md:block">—</span>
+                    
+                    {/* To Date */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-slate-600 block">Sampai Tanggal</label>
+                        <Input 
+                            type="date"
+                            value={toDate}
+                            onChange={(e) => setToDate(e.target.value)}
+                            className="w-full h-11 text-base"
+                        />
+                    </div>
+                    
+                    {/* Reset Button */}
+                    {(fromDate || toDate) && (
+                        <Button 
+                            variant="outline" 
+                            size="lg"
+                            className="w-full md:w-auto h-11 text-sm font-medium text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                            onClick={() => { setFromDate(""); setToDate(""); }}
+                        >
+                            <X className="h-4 w-4 mr-2" />
+                            Reset Filter
+                        </Button>
+                    )}
                 </div>
-                {(fromDate || toDate) && (
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-xs text-slate-500 hover:text-red-600"
-                        onClick={() => { setFromDate(""); setToDate(""); }}
-                    >
-                        <X className="h-3 w-3 mr-1" />
-                        Reset
-                    </Button>
-                )}
             </div>
         </div>
 

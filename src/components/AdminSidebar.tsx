@@ -72,7 +72,7 @@ export default function AdminSidebar({
         <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 flex items-center justify-between shadow-lg z-50">
           <div>
             <h2 className="text-lg font-bold">Admin Panel</h2>
-            <p className="text-xs text-slate-400">CV Morut Jaya</p>
+            <p className="text-xs text-slate-400">CV Jaya Lestari Morut</p>
           </div>
           <Button
             onClick={onToggleMobileMenu}
@@ -166,7 +166,7 @@ export default function AdminSidebar({
         {!isCollapsed && (
           <div>
             <h2 className="text-xl font-bold">Admin Panel</h2>
-            <p className="text-xs text-slate-400">CV Morut Jaya</p>
+            <p className="text-xs text-slate-400">CV. Jaya Lestari Morut</p>
           </div>
         )}
         {isCollapsed && (
