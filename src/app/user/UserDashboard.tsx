@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Pencil, Plus, Clock, MapPin, Users, Briefcase, 
-  Filter, Calendar, User, ChevronLeft, ChevronRight 
+  Calendar, User, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +24,6 @@ interface LogEntry {
   tugas: string;
   lokasi: string;
   partner?: string; // Optional biar aman
-  status?: string;  // Optional biar aman
   nama?: string;    // Tambahan jika API mengembalikan nama
 }
 
@@ -39,7 +38,6 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
   
   // State Filter & Pagination
   const [selectedDate, setSelectedDate] = useState<string>('hari-ini');
-  const [selectedStatus, setSelectedStatus] = useState<string>('semua');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8; // Sedikit dikurangi biar pas di layar
 
@@ -57,7 +55,6 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
             tugas: item.custom_description ?? item.tugas ?? '',
             lokasi: item.location ?? item.lokasi ?? '',
             partner: item.partners ?? item.partner ?? '-', // support partners
-            status: 'Selesai', // Placeholder status (bisa disesuaikan logicnya nanti)
             nama: item.nama
           }));
           setLogs(formattedData);
@@ -72,14 +69,7 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
   }, []);
 
   // 2. FILTERING LOGIC
-  const filteredData = logs.filter(item => {
-    // Filter Status (Logic Placeholder)
-    if (selectedStatus !== 'semua' && item.status !== selectedStatus) {
-      return false;
-    }
-    // Filter Date bisa ditambahkan di sini nanti
-    return true;
-  });
+  const filteredData = logs; // No filtering for now, can add date filtering later if needed
 
   const [editItem, setEditItem] = useState<LogEntry | null>(null);
 
@@ -98,19 +88,7 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-  // Helper Warna Status
-  const getStatusColor = (status: string = 'Selesai') => {
-    switch (status) {
-      case 'Selesai':
-        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'Dalam Proses':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'Pending':
-        return 'bg-amber-100 text-amber-700 border-amber-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
@@ -153,7 +131,7 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         
         {/* --- STATISTIK RINGKAS --- */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           <StatsCard 
             icon={<Clock className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />}
             label="Total Log"
@@ -162,15 +140,9 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
           />
           <StatsCard 
             icon={<Briefcase className="h-5 w-5 md:h-6 md:w-6 text-emerald-600" />}
-            label="Selesai"
-            value={filteredData.filter(i => i.status === 'Selesai').length}
+            label="Pekerjaan"
+            value={new Set(filteredData.map(i => i.tugas)).size}
             bg="bg-emerald-50"
-          />
-          <StatsCard 
-            icon={<Users className="h-5 w-5 md:h-6 md:w-6 text-indigo-600" />}
-            label="Proses"
-            value={filteredData.filter(i => i.status === 'Dalam Proses').length}
-            bg="bg-indigo-50"
           />
           <StatsCard 
             icon={<MapPin className="h-5 w-5 md:h-6 md:w-6 text-amber-600" />}
@@ -188,42 +160,22 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
           </div>
 
           {/* Filters - Full Width Stacked on Mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="space-y-2">
             {/* Filter Tanggal */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-slate-500" />
-                Periode Waktu
-              </label>
-              <Select value={selectedDate} onValueChange={setSelectedDate}>
-                <SelectTrigger className="h-11 bg-slate-50 border-slate-200 focus:ring-blue-500 text-base">
-                  <SelectValue placeholder="Pilih Waktu" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hari-ini">Hari Ini</SelectItem>
-                  <SelectItem value="minggu-ini">Minggu Ini</SelectItem>
-                  <SelectItem value="bulan-ini">Bulan Ini</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Filter Status */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-                <Filter className="h-4 w-4 text-slate-500" />
-                Status Pekerjaan
-              </label>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="h-11 bg-slate-50 border-slate-200 focus:ring-blue-500 text-base">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="semua">Semua Status</SelectItem>
-                  <SelectItem value="Selesai">Selesai</SelectItem>
-                  <SelectItem value="Dalam Proses">Dalam Proses</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-slate-500" />
+              Periode Waktu
+            </label>
+            <Select value={selectedDate} onValueChange={setSelectedDate}>
+              <SelectTrigger className="h-11 bg-slate-50 border-slate-200 focus:ring-blue-500 text-base">
+                <SelectValue placeholder="Pilih Waktu" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="hari-ini">Hari Ini</SelectItem>
+                <SelectItem value="minggu-ini">Minggu Ini</SelectItem>
+                <SelectItem value="bulan-ini">Bulan Ini</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -241,16 +193,15 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                   <tr>
                     <th className="px-6 py-4">Waktu</th>
                     <th className="px-6 py-4">Tugas</th>
-                      <th className="px-6 py-4">Lokasi</th>
-                      <th className="px-6 py-4">Rekan</th>
-                      <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Lokasi</th>
+                    <th className="px-6 py-4">Rekan</th>
                     <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {currentData.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-slate-400">
+                      <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
                         Belum ada data untuk ditampilkan.
                       </td>
                     </tr>
@@ -272,11 +223,6 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                           </div>
                         </td>
                         <td className="px-6 py-4 text-slate-700">{item.partner && item.partner !== '-' ? item.partner : '-'}</td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(item.status)}`}>
-                            {item.status || 'Selesai'}
-                          </span>
-                        </td>
                         <td className="px-6 py-4 text-right">
                           <button onClick={() => setEditItem(item)} className="text-slate-400 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg">
                             <Pencil className="h-4 w-4" />
@@ -298,10 +244,7 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                   <div key={item.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3 active:bg-slate-50 transition-colors">
                     {/* Header Row */}
                     <div className="flex justify-between items-start gap-3">
-                      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide border shadow-sm ${getStatusColor(item.status)}`}>
-                        {item.status || 'Selesai'}
-                      </span>
-                      <span className="text-sm font-bold font-mono text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                      <span className="text-sm font-bold font-mono text-slate-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200">
                         {item.jam}
                       </span>
                     </div>
