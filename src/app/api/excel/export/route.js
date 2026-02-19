@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import * as XLSX from 'xlsx';
 
-export async function POST(request) {
+export async function GET(request) {
   try {
     // Check if user is owner
     const currentUser = await getCurrentUser();
@@ -11,8 +11,9 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized - Owner access only' }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { fromDate, toDate } = body;
+    const { searchParams } = new URL(request.url);
+    const fromDate = searchParams.get('fromDate');
+    const toDate = searchParams.get('toDate');
 
     if (!fromDate || !toDate) {
       return NextResponse.json({ error: 'fromDate and toDate are required' }, { status: 400 });

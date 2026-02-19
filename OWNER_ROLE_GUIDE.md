@@ -46,7 +46,7 @@ The Owner role has been successfully implemented with Excel import/export capabi
     "success": true,
     "imported": 45,
     "total": 50,
-    "errors": ["Row 3: User 'John' not found", ...]
+    "errors": ["Row 3: User 'John' tidak ditemukan", ...]
   }
   ```
 - **Features**:
