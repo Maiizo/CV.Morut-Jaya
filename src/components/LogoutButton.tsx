@@ -42,10 +42,15 @@ export default function LogoutButton({
       onClick={handleLogout}
       variant={variant}
       size={size}
-      className={className}
+      className={
+        // Improve hover and spacing; if icon-only, render circular button
+        `${size === 'icon' ? 'h-9 w-9 p-0 rounded-full flex items-center justify-center' : 'px-3 py-2'} transition-colors ${className || ''}`
+      }
+      title="Logout"
+      aria-label="Logout"
     >
-      {showIcon && <LogOut className="h-4 w-4 mr-2" />}
-      Logout
+      {showIcon && <LogOut className={`${size === 'icon' ? 'h-4 w-4' : 'h-4 w-4 mr-2'}`} />}
+      {size !== 'icon' && 'Logout'}
     </Button>
   );
 }

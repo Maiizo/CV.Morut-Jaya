@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import EditFormModal2 from '@/components/EditFormModal2';
 import LogoutButton from '@/components/LogoutButton';
+import InputFormModal from '@/components/InputFormModal';
 import { 
   ArrowUpDown, 
   Filter, 
@@ -266,20 +267,15 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
-
-            {/* Quick Add Task - Full Width on Mobile */}
-            <form onSubmit={handleAddTask} className="flex gap-2">
-                <Input 
-                    value={newTaskTitle} 
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                    placeholder="Tambah jenis pekerjaan baru" 
-                    className="flex-1 h-12 text-base"
-                />
-                <Button type="submit" disabled={isSubmitting} className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium">
-                    {isSubmitting ? "..." : <><Plus className="h-4 w-4 mr-2" /> Tambah</>}
-                </Button>
-            </form>
-        </div>
+            {/* Mobile quick add */}
+            <div className="md:hidden">
+              <InputFormModal />
+            </div>
+            {/* Desktop add button */}
+            <div className="hidden md:block">
+              <InputFormModal />
+            </div>
+                </div>
 
         {/* Date Range Filter - Mobile Optimized */}
         <div className="bg-white p-4 md:p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -574,7 +570,9 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
             partners: updated.partners || l.partners,
             // also update raw fields if needed
             custom_description: updated.custom_description,
-            location: updated.location
+            location: updated.location,
+            quantity: updated.quantity !== undefined ? updated.quantity : l.quantity,
+            satuan: updated.satuan !== undefined ? updated.satuan : l.satuan
             }) : l));
             setEditItem(null);
         }} 

@@ -278,49 +278,7 @@ export default function MasterDataPage() {
 
                 {/* Add Form - Mobile Optimized */}
                 <div className="p-4 md:p-5 bg-slate-50 border-b border-slate-200">
-                  {section.key === 'users' ? (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input 
-                          placeholder="Username" 
-                          value={userForm.username}
-                          onChange={(e) => setUserForm(prev => ({ ...prev, username: e.target.value }))}
-                          className="h-11 text-base"
-                        />
-                        <Input 
-                          placeholder="Email" 
-                          type="email"
-                          value={userForm.email}
-                          onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
-                          className="h-11 text-base"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Input 
-                          placeholder="Password" 
-                          type="password"
-                          value={userForm.password}
-                          onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))}
-                          className="h-11 text-base"
-                        />
-                        <select 
-                          value={userForm.role}
-                          onChange={(e) => setUserForm(prev => ({ ...prev, role: e.target.value }))}
-                          className="flex h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-base"
-                        >
-                          <option value="user">User</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                      </div>
-                      <Button 
-                        onClick={() => handleAdd(section.key, section.apiEndpoint, section.nameField)}
-                        className="w-full h-11 text-base bg-slate-700 hover:bg-slate-800 text-white font-medium"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Tambah User
-                      </Button>
-                    </div>
-                  ) : (
+                  {section.key === 'users' ? null : (
                     <div className="flex gap-2">
                       <Input 
                         placeholder={`Tambah ${section.title.toLowerCase()} baru...`}
@@ -362,29 +320,31 @@ export default function MasterDataPage() {
                             </div>
                           )}
                         </div>
-                        <div className="flex gap-1 md:gap-2 flex-shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditModal({ 
-                              isOpen: true, 
-                              type: section.key, 
-                              item: { ...item },
-                              section 
-                            })}
-                            className="h-9 w-9 md:h-10 md:w-10 p-0 hover:bg-blue-50 hover:text-blue-600"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteModal({ isOpen: true, type: section.key, item })}
-                            className="h-9 w-9 md:h-10 md:w-10 p-0 hover:bg-red-50 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        {section.key !== 'users' ? (
+                          <div className="flex gap-1 md:gap-2 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditModal({ 
+                                isOpen: true, 
+                                type: section.key, 
+                                item: { ...item },
+                                section 
+                              })}
+                              className="h-9 w-9 md:h-10 md:w-10 p-0 hover:bg-blue-50 hover:text-blue-600"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteModal({ isOpen: true, type: section.key, item })}
+                              className="h-9 w-9 md:h-10 md:w-10 p-0 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : null}
                       </div>
                     ))
                   )}

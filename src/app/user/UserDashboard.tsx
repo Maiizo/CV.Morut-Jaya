@@ -6,13 +6,7 @@ import {
   Calendar, User, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// select removed (periode waktu removed)
 import InputFormModal from "@/components/InputFormModal"; // Pastikan path ini benar
 import EditFormModal2 from '@/components/EditFormModal2';
 import LogoutButton from '@/components/LogoutButton';
@@ -24,6 +18,8 @@ interface LogEntry {
   tugas: string;
   lokasi: string;
   partner?: string; // Optional biar aman
+  quantity?: string | null;
+  satuan?: string | null;
   nama?: string;    // Tambahan jika API mengembalikan nama
 }
 
@@ -37,7 +33,6 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
   const [loading, setLoading] = useState(true);
   
   // State Filter & Pagination
-  const [selectedDate, setSelectedDate] = useState<string>('hari-ini');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8; // Sedikit dikurangi biar pas di layar
 
@@ -55,6 +50,8 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
             tugas: item.custom_description ?? item.tugas ?? '',
             lokasi: item.location ?? item.lokasi ?? '',
             partner: item.partners ?? item.partner ?? '-', // support partners
+            quantity: item.quantity ?? null,
+            satuan: item.satuan ?? null,
             nama: item.nama
           }));
           setLogs(formattedData);
@@ -79,6 +76,8 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
       tugas: updated.custom_description || l.tugas,
       lokasi: updated.location || l.lokasi,
       partner: updated.partners || updated.partner || l.partner,
+      quantity: updated.quantity !== undefined ? updated.quantity : l.quantity,
+      satuan: updated.satuan !== undefined ? updated.satuan : l.satuan,
     }) : l));
     setEditItem(null);
   }
@@ -112,11 +111,8 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
             <div className="flex items-center gap-4">
               <div className="hidden md:flex flex-col items-end mr-2">
                 <span className="text-sm font-semibold text-slate-800">{userName}</span>
-                <span className="text-xs text-slate-500">Staff Lapangan</span>
-              </div>
-              <div className="h-9 w-9 bg-slate-100 rounded-full flex items-center justify-center border border-slate-200">
-                <User className="h-5 w-5 text-slate-600" />
-              </div>
+               </div>
+             
               <LogoutButton 
                 variant="ghost" 
                 size="icon"
@@ -158,25 +154,6 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
           <div className="w-full">
             <InputFormModal />
           </div>
-
-          {/* Filters - Full Width Stacked on Mobile */}
-          <div className="space-y-2">
-            {/* Filter Tanggal */}
-            <label className="text-sm font-semibold text-slate-600 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-slate-500" />
-              Periode Waktu
-            </label>
-            <Select value={selectedDate} onValueChange={setSelectedDate}>
-              <SelectTrigger className="h-11 bg-slate-50 border-slate-200 focus:ring-blue-500 text-base">
-                <SelectValue placeholder="Pilih Waktu" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hari-ini">Hari Ini</SelectItem>
-                <SelectItem value="minggu-ini">Minggu Ini</SelectItem>
-                <SelectItem value="bulan-ini">Bulan Ini</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
         {/* --- CONTENT AREA --- */}
@@ -194,6 +171,8 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                     <th className="px-6 py-4">Waktu</th>
                     <th className="px-6 py-4">Tugas</th>
                     <th className="px-6 py-4">Lokasi</th>
+                    <th className="px-6 py-4">Jumlah</th>
+                    <th className="px-6 py-4">Satuan</th>
                     <th className="px-6 py-4">Rekan</th>
                     <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
@@ -201,7 +180,7 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                 <tbody className="divide-y divide-slate-100">
                   {currentData.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
+                      <td colSpan={7} className="px-6 py-10 text-center text-slate-400">
                         Belum ada data untuk ditampilkan.
                       </td>
                     </tr>
@@ -222,6 +201,8 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                             </div>
                           </div>
                         </td>
+                        <td className="px-6 py-4 text-slate-700 text-center">{item.quantity ?? '-'}</td>
+                        <td className="px-6 py-4 text-slate-700 text-center">{item.satuan ?? '-'}</td>
                         <td className="px-6 py-4 text-slate-700">{item.partner && item.partner !== '-' ? item.partner : '-'}</td>
                         <td className="px-6 py-4 text-right">
                           <button onClick={() => setEditItem(item)} className="text-slate-400 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg">
@@ -262,6 +243,12 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                             <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                               <Users className="h-3 w-3" />
                               Rekan: {item.partner}
+                            </div>
+                          )}
+                          {(item.quantity || item.satuan) && (
+                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-3">
+                              <div>Jumlah: <span className="font-medium">{item.quantity ?? '-'}</span></div>
+                              <div>Satuan: <span className="font-medium">{item.satuan ?? '-'}</span></div>
                             </div>
                           )}
                         </div>

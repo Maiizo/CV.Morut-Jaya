@@ -169,6 +169,14 @@ export async function PUT(request) {
       fields.push(`partners = $${idx++}`);
       values.push(partners);
     }
+    if (body.quantity !== undefined) {
+      fields.push(`quantity = $${idx++}`);
+      values.push(body.quantity);
+    }
+    if (body.satuan !== undefined) {
+      fields.push(`satuan = $${idx++}`);
+      values.push(body.satuan);
+    }
     if (location !== undefined) {
       fields.push(`location = $${idx++}`);
       values.push(location);

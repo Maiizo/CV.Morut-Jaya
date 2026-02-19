@@ -34,6 +34,9 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
   const [locationsList, setLocationsList] = useState<{ id: number; name: string }[]>([]);
   const [partners, setPartners] = useState<string[]>([]);
   const [partnerInput, setPartnerInput] = useState('');
+  const [satuanList, setSatuanList] = useState<{ id: number; name: string }[]>([]);
+  const [quantity, setQuantity] = useState('');
+  const [satuan, setSatuan] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -42,6 +45,8 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
       // Prefer API's canonical fields: custom_description and location
       setSelectedTask('');
       setLocation((item as any).location ?? (item as any).lokasi ?? '');
+      setQuantity(String((item as any).quantity ?? ''));
+      setSatuan((item as any).satuan ?? '');
       // Parse partners string into array if provided
       const partnerStr = (item as any).partners ?? (item as any).partner ?? null;
       if (partnerStr && String(partnerStr).trim().length > 0) {
@@ -81,6 +86,18 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
   }, [open]);
 
   useEffect(() => {
+    async function fetchSatuan() {
+      try {
+        const res = await fetch('/api/satuan');
+        if (res.ok) {
+          const data = await res.json();
+          setSatuanList(data);
+          if (!satuan && data.length > 0) setSatuan(data[0].name);
+        }
+      } catch (err) {
+        console.error('Gagal ambil satuan:', err);
+      }
+    }
     async function fetchLocations() {
       try {
         const res = await fetch('/api/locations');
@@ -93,7 +110,10 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
         console.error('Gagal ambil lokasi:', err);
       }
     }
-    if (open) fetchLocations();
+    if (open) {
+      fetchLocations();
+      fetchSatuan();
+    }
   }, [open]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -107,6 +127,9 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
         const taskTitle = tasks.find(t => t.id.toString() === selectedTask)?.title || null;
         if (taskTitle) payload.custom_description = taskTitle;
       }
+      // include quantity and satuan similar to add form
+      payload.quantity = quantity || null;
+      payload.satuan = satuan || null;
       if (partners.length > 0) payload.partners = partners.join(', ');
 
       const res = await fetch('/api/logs', {
@@ -147,7 +170,7 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
         <span />
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[425px] bg-white rounded-xl">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white rounded-xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-center text-gray-800">Edit Laporan</DialogTitle>
         </DialogHeader>
@@ -201,6 +224,36 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
                   {p} ×
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 md:gap-4">
+            <div className="grid gap-2">
+              <Label className="font-semibold text-gray-700">Jumlah</Label>
+              <Input
+                type="number"
+                min="0"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="h-10"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="font-semibold text-gray-700">Satuan</Label>
+              <Select value={satuan} onValueChange={setSatuan}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih satuan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {satuanList.length === 0 ? (
+                    <SelectItem value="loading" disabled>Memuat satuan...</SelectItem>
+                  ) : (
+                    satuanList.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
