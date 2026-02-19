@@ -20,6 +20,8 @@ export default function HomePage() {
             // Redirect based on role
             if (data.user.role === 'admin') {
               router.push('/admin');
+            } else if (data.user.role === 'owner') {
+              router.push('/owner');
             } else {
               router.push('/user');
             }

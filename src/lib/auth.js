@@ -89,6 +89,22 @@ export async function isAdmin() {
 }
 
 /**
+ * Check if user has owner role
+ */
+export async function isOwner() {
+  const user = await getCurrentUser();
+  return user?.role === 'owner';
+}
+
+/**
+ * Check if user has admin or owner role
+ */
+export async function isAdminOrOwner() {
+  const user = await getCurrentUser();
+  return user?.role === 'admin' || user?.role === 'owner';
+}
+
+/**
  * Clear session cookie
  */
 export async function clearSessionCookie() {

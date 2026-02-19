@@ -14,6 +14,9 @@ const adminRoutes = ['/admin'];
 // User-only routes
 const userRoutes = ['/user'];
 
+// Owner-only routes
+const ownerRoutes = ['/owner'];
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
@@ -22,6 +25,7 @@ export function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
   const isUserRoute = userRoutes.some(route => pathname.startsWith(route));
+  const isOwnerRoute = ownerRoutes.some(route => pathname.startsWith(route));
   
   // If it's a public route, allow access
   if (isPublicRoute) {
@@ -35,7 +39,7 @@ export function middleware(request: NextRequest) {
   }
   
   // For protected routes, check if user is authenticated
-  if (!sessionToken && (isAdminRoute || isUserRoute)) {
+  if (!sessionToken && (isAdminRoute || isUserRoute || isOwnerRoute)) {
     // Redirect to login if not authenticated
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
