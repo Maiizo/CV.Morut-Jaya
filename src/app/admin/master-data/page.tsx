@@ -99,6 +99,12 @@ export default function MasterDataPage() {
     users: ''
   });
 
+  // Brand & Stock state
+  const [brandList, setBrandList] = useState<any[]>([]);
+  const [brandLoading, setBrandLoading] = useState(true);
+  const [brandForm, setBrandForm] = useState({ taskId: '', name: '', satuan: '' });
+  const [stockForm, setStockForm] = useState<Record<number, string>>({});
+
   // User form states
   const [userForm, setUserForm] = useState({
     username: '',
@@ -107,11 +113,14 @@ export default function MasterDataPage() {
     role: 'user'
   });
 
+  const [taskDescription, setTaskDescription] = useState('');
+
   // Fetch all data on mount
   useEffect(() => {
     sections.forEach(section => {
       fetchData(section.key, section.apiEndpoint);
     });
+    fetchBrands();
   }, []);
 
   async function fetchData(type: DataType, endpoint: string) {
@@ -123,6 +132,18 @@ export default function MasterDataPage() {
       console.error(`Error fetching ${type}:`, error);
     } finally {
       setLoading(prev => ({ ...prev, [type]: false }));
+    }
+  }
+
+  async function fetchBrands() {
+    try {
+      const res = await fetch('/api/brands');
+      const result = await res.json();
+      setBrandList(result);
+    } catch (error) {
+      console.error('Error fetching brands:', error);
+    } finally {
+      setBrandLoading(false);
     }
   }
 
@@ -141,6 +162,8 @@ export default function MasterDataPage() {
           return;
         }
         body = userForm;
+      } else if (type === 'tasks') {
+        body = { title: value, description: taskDescription || null };
       } else {
         body = { [nameField]: value };
       }
@@ -160,12 +183,88 @@ export default function MasterDataPage() {
         if (type === 'users') {
           setUserForm({ username: '', email: '', password: '', role: 'user' });
         }
+        if (type === 'tasks') {
+          setTaskDescription('');
+        }
       } else {
         const error = await res.json();
         alert(error.error || 'Gagal menambah data');
       }
     } catch (error) {
       console.error(`Error adding ${type}:`, error);
+      alert('Terjadi kesalahan');
+    }
+  }
+
+  // --- BRAND HANDLERS ---
+  async function handleAddBrand() {
+    if (!brandForm.taskId || !brandForm.name.trim()) {
+      alert('Pilih pekerjaan dan isi nama brand');
+      return;
+    }
+    try {
+      const res = await fetch('/api/brands', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task_def_id: parseInt(brandForm.taskId, 10),
+          name: brandForm.name.trim(),
+          satuan: brandForm.satuan || null,
+        })
+      });
+      if (res.ok) {
+        const newBrand = await res.json();
+        setBrandList(prev => [...prev, newBrand]);
+        setBrandForm({ taskId: '', name: '', satuan: '' });
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Gagal menambah brand');
+      }
+    } catch (error) {
+      console.error('Error adding brand:', error);
+      alert('Terjadi kesalahan');
+    }
+  }
+
+  async function handleAddStock(brandId: number) {
+    const val = stockForm[brandId];
+    const amount = val ? parseInt(val, 10) : NaN;
+    if (!amount || Number.isNaN(amount) || amount <= 0) {
+      alert('Jumlah stok harus lebih dari 0');
+      return;
+    }
+    try {
+      const res = await fetch('/api/brands/stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brand_id: brandId, amount })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setBrandList(prev => prev.map(b => b.id === brandId ? { ...b, stock: updated.stock } : b));
+        setStockForm(prev => ({ ...prev, [brandId]: '' }));
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Gagal menambah stok');
+      }
+    } catch (error) {
+      console.error('Error adding stock:', error);
+      alert('Terjadi kesalahan');
+    }
+  }
+
+  async function handleDeleteBrand(brandId: number) {
+    if (!confirm('Hapus brand ini?')) return;
+    try {
+      const res = await fetch(`/api/brands?id=${brandId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setBrandList(prev => prev.filter(b => b.id !== brandId));
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Gagal menghapus brand');
+      }
+    } catch (error) {
+      console.error('Error deleting brand:', error);
       alert('Terjadi kesalahan');
     }
   }
@@ -278,7 +377,35 @@ export default function MasterDataPage() {
 
                 {/* Add Form - Mobile Optimized */}
                 <div className="p-4 md:p-5 bg-slate-50 border-b border-slate-200">
-                  {section.key === 'users' ? null : (
+                  {section.key === 'users' ? null : section.key === 'tasks' ? (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder={`Tambah ${section.title.toLowerCase()} baru...`}
+                          value={addInput[section.key]}
+                          onChange={(e) => setAddInput(prev => ({ ...prev, [section.key]: e.target.value }))}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleAdd(section.key, section.apiEndpoint, section.nameField);
+                            }
+                          }}
+                          className="flex-1 h-11 text-base"
+                        />
+                        <Button 
+                          onClick={() => handleAdd(section.key, section.apiEndpoint, section.nameField)}
+                          className="h-11 w-11 p-0 bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0"
+                        >
+                          <Plus className="h-5 w-5" />
+                        </Button>
+                      </div>
+                      <Input
+                        placeholder="Deskripsi pekerjaan (opsional)"
+                        value={taskDescription}
+                        onChange={(e) => setTaskDescription(e.target.value)}
+                        className="h-11 text-base"
+                      />
+                    </div>
+                  ) : (
                     <div className="flex gap-2">
                       <Input 
                         placeholder={`Tambah ${section.title.toLowerCase()} baru...`}
@@ -353,6 +480,110 @@ export default function MasterDataPage() {
             );
           })}
         </div>
+
+        {/* Brand & Stock */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-emerald-600 text-white p-4 md:p-5 flex items-center gap-3">
+            <div className="flex-shrink-0"><Briefcase className="h-5 w-5" /></div>
+            <div className="flex-1">
+              <h2 className="text-base md:text-lg font-semibold">Brand & Stok Per Pekerjaan</h2>
+              <p className="text-sm text-white/80">Admin menambah brand dan stok awal</p>
+            </div>
+          </div>
+
+          <div className="p-4 md:p-5 space-y-4 bg-slate-50 border-b border-slate-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="md:col-span-1">
+                <label className="text-sm font-medium text-slate-700 mb-1 block">Pekerjaan</label>
+                <select
+                  value={brandForm.taskId}
+                  onChange={(e) => setBrandForm(prev => ({ ...prev, taskId: e.target.value }))}
+                  className="flex h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                >
+                  <option value="">Pilih pekerjaan</option>
+                  {data.tasks.map((t) => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1 block">Nama Brand</label>
+                <Input
+                  value={brandForm.name}
+                  onChange={(e) => setBrandForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Misal: Brand A"
+                  className="h-11 text-base"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1 block">Satuan Brand</label>
+                <select
+                  value={brandForm.satuan}
+                  onChange={(e) => setBrandForm(prev => ({ ...prev, satuan: e.target.value }))}
+                  className="flex h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                >
+                  <option value="">Pilih satuan (opsional)</option>
+                  {data.satuan.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={handleAddBrand} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4">
+                <Plus className="h-4 w-4 mr-2" />Tambah Brand
+              </Button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                <tr>
+                  <th className="px-4 py-3 text-left">Brand</th>
+                  <th className="px-4 py-3 text-left">Pekerjaan</th>
+                  <th className="px-4 py-3 text-left">Satuan</th>
+                  <th className="px-4 py-3 text-center">Stok</th>
+                  <th className="px-4 py-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {brandLoading ? (
+                    <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">Memuat brand...</td></tr>
+                  ) : brandList.length === 0 ? (
+                    <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-400">Belum ada brand</td></tr>
+                  ) : (
+                  brandList.map((brand) => (
+                    <tr key={brand.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 font-semibold text-slate-800">{brand.name}</td>
+                      <td className="px-4 py-3 text-slate-700">{brand.task_title || brand.task_def_id}</td>
+                      <td className="px-4 py-3 text-slate-700">{brand.satuan || '-'}</td>
+                      <td className="px-4 py-3 text-center font-semibold text-slate-800">{brand.stock ?? 0}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="Tambah stok"
+                            value={stockForm[brand.id] || ''}
+                            onChange={(e) => setStockForm(prev => ({ ...prev, [brand.id]: e.target.value }))}
+                            className="w-28 h-10"
+                          />
+                          <Button size="sm" onClick={() => handleAddStock(brand.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                            Tambah
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => handleDeleteBrand(brand.id)} className="text-red-600 border-red-200 hover:bg-red-50">
+                            Hapus
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* Edit Modal */}
@@ -412,6 +643,32 @@ export default function MasterDataPage() {
                     </select>
                   </div>
                 </>
+              ) : editModal.type === 'tasks' ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1 block">Nama</label>
+                    <Input 
+                      value={(editModal.item as any)[editModal.section.nameField] || ''}
+                      onChange={(e) => setEditModal(prev => ({
+                        ...prev,
+                        item: prev.item && prev.section ? { 
+                          ...prev.item, 
+                          [prev.section.nameField]: e.target.value 
+                        } : null
+                      }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1 block">Deskripsi (opsional)</label>
+                    <Input
+                      value={(editModal.item as any).description || ''}
+                      onChange={(e) => setEditModal(prev => ({
+                        ...prev,
+                        item: prev.item ? { ...prev.item, description: e.target.value } : null
+                      }))}
+                    />
+                  </div>
+                </div>
               ) : (
                 <div>
                   <label className="text-sm font-medium text-slate-700 mb-1 block">Nama</label>

@@ -17,6 +17,7 @@ interface LogEntry {
   jam: string;
   tugas: string;
   lokasi: string;
+  brand?: string | null;
   partner?: string; // Optional biar aman
   quantity?: string | null;
   satuan?: string | null;
@@ -47,12 +48,17 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
           const formattedData = data.map((item: any) => ({
             id: item.id,
             jam: item.jam_mulai || item.jam, // Menangani variasi nama field
-            tugas: item.custom_description ?? item.tugas ?? '',
+            tugas: item.task_title ?? item.tugas ?? item.custom_description ?? '',
             lokasi: item.location ?? item.lokasi ?? '',
+            brand: item.brand_name ?? item.brand ?? null,
             partner: item.partners ?? item.partner ?? '-', // support partners
             quantity: item.quantity ?? null,
             satuan: item.satuan ?? null,
-            nama: item.nama
+            nama: item.nama,
+            task_title: item.task_title,
+            custom_description: item.custom_description,
+            brand_id: item.brand_id,
+            task_def_id: item.task_def_id,
           }));
           setLogs(formattedData);
         }
@@ -73,11 +79,16 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
   function handleSaved(updated: any) {
     setLogs(prev => prev.map(l => l.id === updated.id ? ({
       ...l,
-      tugas: updated.custom_description || l.tugas,
+      tugas: (updated as any).task_title || updated.tugas || updated.custom_description || l.tugas,
       lokasi: updated.location || l.lokasi,
+      brand: (updated as any).brand_name ?? l.brand,
       partner: updated.partners || updated.partner || l.partner,
       quantity: updated.quantity !== undefined ? updated.quantity : l.quantity,
       satuan: updated.satuan !== undefined ? updated.satuan : l.satuan,
+      task_title: (updated as any).task_title ?? l.task_title,
+      custom_description: updated.custom_description,
+      brand_id: updated.brand_id ?? l.brand_id,
+      task_def_id: updated.task_def_id ?? l.task_def_id,
     }) : l));
     setEditItem(null);
   }
@@ -170,6 +181,7 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                   <tr>
                     <th className="px-6 py-4">Waktu</th>
                     <th className="px-6 py-4">Tugas</th>
+                    <th className="px-6 py-4">Brand</th>
                     <th className="px-6 py-4">Lokasi</th>
                     <th className="px-6 py-4">Jumlah</th>
                     <th className="px-6 py-4">Satuan</th>
@@ -193,6 +205,7 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                         <td className="px-6 py-4 text-slate-800 font-semibold">
                           {item.tugas}
                         </td>
+                        <td className="px-6 py-4 text-slate-700 text-center">{item.brand ?? '-'}</td>
                         <td className="px-6 py-4 text-slate-500">
                           <div className="flex items-center gap-2">
                             <MapPin className="h-3.5 w-3.5 text-slate-400" />
@@ -243,6 +256,11 @@ export default function UserDashboard({ userName = 'Pekerja' }: UserDashboardPro
                             <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                               <Users className="h-3 w-3" />
                               Rekan: {item.partner}
+                            </div>
+                          )}
+                          {item.brand && (
+                            <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                              Brand: <span className="font-medium">{item.brand}</span>
                             </div>
                           )}
                           {(item.quantity || item.satuan) && (

@@ -28,8 +28,12 @@ interface EditFormModalProps {
 
 export default function EditFormModal2({ item, onClose, onSaved }: EditFormModalProps) {
   const [open, setOpen] = useState(false);
-  const [tasks, setTasks] = useState<{ id: number; title: string }[]>([]);
+  const [tasks, setTasks] = useState<{ id: number; title: string; description?: string }[]>([]);
   const [selectedTask, setSelectedTask] = useState('');
+  const [brandsByTask, setBrandsByTask] = useState<Record<string, { id: number; name: string; stock: number; description?: string; satuan?: string; task_def_id: number; task_title?: string; }[]>>({});
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedBrandStock, setSelectedBrandStock] = useState<number | null>(null);
+  const [selectedBrandSatuan, setSelectedBrandSatuan] = useState<string>('');
   const [location, setLocation] = useState('');
   const [locationsList, setLocationsList] = useState<{ id: number; name: string }[]>([]);
   const [partners, setPartners] = useState<string[]>([]);
@@ -37,16 +41,19 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
   const [satuanList, setSatuanList] = useState<{ id: number; name: string }[]>([]);
   const [quantity, setQuantity] = useState('');
   const [satuan, setSatuan] = useState('');
+  const [customDesc, setCustomDesc] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setOpen(!!item);
     if (item) {
       // Prefer API's canonical fields: custom_description and location
-      setSelectedTask('');
+      setSelectedTask((item as any).task_def_id ? String((item as any).task_def_id) : '');
+      setSelectedBrand((item as any).brand_id ? String((item as any).brand_id) : '');
       setLocation((item as any).location ?? (item as any).lokasi ?? '');
       setQuantity(String((item as any).quantity ?? ''));
       setSatuan((item as any).satuan ?? '');
+      setCustomDesc((item as any).custom_description ?? '');
       // Parse partners string into array if provided
       const partnerStr = (item as any).partners ?? (item as any).partner ?? null;
       if (partnerStr && String(partnerStr).trim().length > 0) {
@@ -86,6 +93,35 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
   }, [open]);
 
   useEffect(() => {
+    if (open && selectedTask) {
+      fetchBrands(selectedTask, (item as any)?.brand_id ? String((item as any).brand_id) : undefined);
+    }
+    if (!selectedTask) {
+      setSelectedBrand('');
+      setSelectedBrandStock(null);
+    }
+  }, [selectedTask, open]);
+
+  useEffect(() => {
+    if (!selectedTask) return;
+    const list = brandsByTask[selectedTask] || [];
+    const current = list.find((b) => b.id.toString() === selectedBrand);
+    if (current) {
+      setSelectedBrandStock(current.stock ?? null);
+      setSelectedBrandSatuan(current.satuan || '');
+      if (current.satuan) setSatuan(current.satuan);
+    } else if (list.length > 0 && !selectedBrand) {
+      setSelectedBrand(list[0].id.toString());
+      setSelectedBrandStock(list[0].stock ?? null);
+      setSelectedBrandSatuan(list[0].satuan || '');
+      if (list[0].satuan) setSatuan(list[0].satuan);
+    } else {
+      setSelectedBrandStock(null);
+      setSelectedBrandSatuan('');
+    }
+  }, [brandsByTask, selectedBrand, selectedTask]);
+
+  useEffect(() => {
     async function fetchSatuan() {
       try {
         const res = await fetch('/api/satuan');
@@ -116,17 +152,64 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
     }
   }, [open]);
 
+  async function fetchBrands(taskId: string, preferBrandId?: string) {
+    if (!taskId) return;
+    if (brandsByTask[taskId]) {
+      if (preferBrandId) setSelectedBrand(preferBrandId);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/brands?taskId=${taskId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setBrandsByTask(prev => ({ ...prev, [taskId]: data }));
+        if (preferBrandId) {
+          setSelectedBrand(preferBrandId);
+        } else if (data.length > 0) {
+          setSelectedBrand(data[0].id.toString());
+          setSelectedBrandStock(data[0].stock ?? null);
+          setSelectedBrandSatuan(data[0].satuan || '');
+          if (data[0].satuan) setSatuan(data[0].satuan);
+        } else {
+          setSelectedBrand('');
+          setSelectedBrandStock(null);
+          setSelectedBrandSatuan('');
+        }
+      }
+    } catch (err) {
+      console.error('Gagal ambil brand:', err);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!item) return;
     setLoading(true);
     try {
+      if (!selectedTask) {
+        alert('Jenis pekerjaan wajib dipilih');
+        return;
+      }
+      if (!selectedBrand) {
+        alert('Brand wajib dipilih');
+        return;
+      }
+      const qtyNumber = parseInt(quantity, 10);
+      if (!Number.isFinite(qtyNumber) || qtyNumber <= 0) {
+        alert('Jumlah harus lebih dari 0');
+        return;
+      }
+      if (selectedBrandStock !== null && qtyNumber > selectedBrandStock) {
+        alert(`Stok tidak cukup. Sisa: ${selectedBrandStock}`);
+        return;
+      }
+
       const payload: any = { id: item.id, location };
       if (selectedTask) {
         payload.task_def_id = parseInt(selectedTask, 10);
-        const taskTitle = tasks.find(t => t.id.toString() === selectedTask)?.title || null;
-        if (taskTitle) payload.custom_description = taskTitle;
       }
+      payload.custom_description = customDesc || null;
+      payload.brand_id = parseInt(selectedBrand, 10);
       // include quantity and satuan similar to add form
       payload.quantity = quantity || null;
       payload.satuan = satuan || null;
@@ -172,12 +255,15 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
 
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-center text-gray-800">Edit Laporan</DialogTitle>
+          <DialogTitle className="text-xl md:text-2xl font-bold text-center text-gray-800">Form Laporan Kerja</DialogTitle>
+          <p className="text-center text-gray-500 text-sm md:text-base">
+            Ubah data pekerjaan yang sudah dicatat.
+          </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 py-2">
+        <form onSubmit={handleSubmit} className="grid gap-5 md:gap-6 py-4">
           <div className="grid gap-2">
-            <Label className="font-semibold text-gray-700">Jenis Pekerjaan</Label>
+            <Label className="font-semibold text-gray-700 text-sm md:text-base">Jenis Pekerjaan</Label>
                   <Select onValueChange={setSelectedTask} value={selectedTask} required>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Pilih Pekerjaan --" />
@@ -192,10 +278,60 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
                       )}
                     </SelectContent>
                   </Select>
+                  {selectedTask && tasks.find(t => t.id.toString() === selectedTask)?.title && (
+                    <p className="text-sm text-gray-500">
+                      {tasks.find(t => t.id.toString() === selectedTask)?.description || 'Tidak ada deskripsi.'}
+                    </p>
+                  )}
           </div>
 
           <div className="grid gap-2">
-            <Label className="font-semibold text-gray-700">Lokasi / Detail</Label>
+            <Label className="font-semibold text-gray-700 text-sm md:text-base">Deskripsi pekerjaan (opsional)</Label>
+            <Input
+              value={customDesc}
+              onChange={(e) => setCustomDesc(e.target.value)}
+              placeholder="Tuliskan detail pekerjaan jika perlu"
+              className="h-10 md:h-11"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label className="font-semibold text-gray-700 text-sm md:text-base">Brand</Label>
+            <Select
+              value={selectedBrand}
+              onValueChange={setSelectedBrand}
+              disabled={!selectedTask || (brandsByTask[selectedTask]?.length ?? 0) === 0}
+              required
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={selectedTask ? '-- Pilih Brand --' : 'Pilih pekerjaan dulu'} />
+              </SelectTrigger>
+              <SelectContent>
+                {!selectedTask ? (
+                  <SelectItem value="no-task" disabled>Pilih pekerjaan dulu</SelectItem>
+                ) : (brandsByTask[selectedTask]?.length ?? 0) === 0 ? (
+                  <SelectItem value="no-brand" disabled>Brand belum tersedia</SelectItem>
+                ) : (
+                  (brandsByTask[selectedTask] || []).map((brand) => (
+                    <SelectItem key={brand.id} value={brand.id.toString()}>
+                      {brand.name} (Stok: {brand.stock ?? 0}{brand.satuan ? ` • ${brand.satuan}` : ''})
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <div className="text-sm text-gray-500 space-y-1">
+              {selectedBrandStock !== null && (
+                <p>Stok tersisa: <span className="font-semibold text-gray-700">{selectedBrandStock}</span></p>
+              )}
+              {selectedBrandSatuan && (
+                <p>Satuan brand: <span className="font-semibold text-gray-700">{selectedBrandSatuan}</span></p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label className="font-semibold text-gray-700 text-sm md:text-base">Lokasi / Detail</Label>
             <Select value={location} onValueChange={setLocation} required>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="-- Pilih Lokasi --" />
@@ -212,35 +348,24 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
             </Select>
           </div>
 
-          <div className="grid gap-2">
-            <Label className="font-semibold text-gray-700">Rekan Kerja (opsional)</Label>
-            <div className="flex gap-2">
-              <Input value={partnerInput} onChange={(e) => setPartnerInput(e.target.value)} placeholder="Tambah nama rekan, tekan +" />
-              <Button type="button" onClick={addPartner}>+</Button>
-            </div>
-            <div className="flex gap-2 mt-2 flex-wrap">
-              {partners.map((p, i) => (
-                <button key={i} type="button" onClick={() => removePartner(i)} className="px-2 py-1 bg-slate-100 rounded-full text-sm border">
-                  {p} ×
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-3 md:gap-4">
             <div className="grid gap-2">
-              <Label className="font-semibold text-gray-700">Jumlah</Label>
+              <Label className="font-semibold text-gray-700 text-sm md:text-base">Jumlah</Label>
               <Input
                 type="number"
                 min="0"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                className="h-10"
+                className="h-10 md:h-11"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="font-semibold text-gray-700">Satuan</Label>
-              <Select value={satuan} onValueChange={setSatuan}>
+              <Label className="font-semibold text-gray-700 text-sm md:text-base">Satuan</Label>
+              <Select
+                value={satuan}
+                onValueChange={setSatuan}
+                disabled={!!selectedBrandSatuan}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih satuan" />
                 </SelectTrigger>
@@ -254,6 +379,24 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
                   )}
                 </SelectContent>
               </Select>
+              {selectedBrandSatuan && (
+                  <p className="text-xs text-gray-500">Satuan mengikuti brand (tidak bisa diubah).</p>
+                )}
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label className="font-semibold text-gray-700 text-sm md:text-base">Rekan Kerja (opsional)</Label>
+            <div className="flex gap-2">
+              <Input value={partnerInput} onChange={(e) => setPartnerInput(e.target.value)} placeholder="Tambah nama rekan" className="h-10 md:h-11" />
+              <Button type="button" onClick={addPartner} className="h-10 md:h-11 w-11 p-0">+</Button>
+            </div>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              {partners.map((p, i) => (
+                <button key={i} type="button" onClick={() => removePartner(i)} className="px-2 py-1 bg-slate-100 rounded-full text-sm border">
+                  {p} ×
+                </button>
+              ))}
             </div>
           </div>
 

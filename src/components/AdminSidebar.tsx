@@ -48,12 +48,7 @@ export default function AdminSidebar({
       path: '/admin/master-data',
       description: 'Kelola Data Master'
     },
-    {
-      label: 'Ringkasan Harian',
-      icon: <FileText className="h-5 w-5" />,
-      path: '/admin/ringkasan-harian',
-      description: 'Laporan Harian'
-    }
+    
   ];
 
   const handleNavigation = (path: string) => {

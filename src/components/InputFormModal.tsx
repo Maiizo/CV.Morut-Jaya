@@ -23,8 +23,12 @@ import {
 
 export default function InputFormModal() {
   // State untuk data form
-  const [tasks, setTasks] = useState<{ id: number; title: string }[]>([]);
+  const [tasks, setTasks] = useState<{ id: number; title: string; description?: string }[]>([]);
   const [selectedTask, setSelectedTask] = useState("");
+  const [brandsByTask, setBrandsByTask] = useState<Record<string, { id: number; name: string; stock: number; description?: string; satuan?: string; task_def_id: number; task_title?: string; }[]>>({});
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [selectedBrandStock, setSelectedBrandStock] = useState<number | null>(null);
+  const [selectedBrandSatuan, setSelectedBrandSatuan] = useState<string>('');
   const [location, setLocation] = useState("");
   const [locationsList, setLocationsList] = useState<{ id: number; name: string }[]>([]);
   const [satuanList, setSatuanList] = useState<{ id: number; name: string }[]>([]);
@@ -32,6 +36,7 @@ export default function InputFormModal() {
   const [partnerInput, setPartnerInput] = useState('');
   const [quantity, setQuantity] = useState('');
   const [satuan, setSatuan] = useState('');
+  const [customDesc, setCustomDesc] = useState('');
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false); // Untuk kontrol buka/tutup modal
 
@@ -53,6 +58,27 @@ export default function InputFormModal() {
   fetchLocations();
   fetchSatuan();
 }, []);
+
+  useEffect(() => {
+    if (selectedTask) {
+      fetchBrands(selectedTask);
+    } else {
+      setSelectedBrand('');
+      setSelectedBrandStock(null);
+      setSelectedBrandSatuan('');
+    }
+  }, [selectedTask]);
+
+  useEffect(() => {
+    if (!selectedTask) return;
+    const list = brandsByTask[selectedTask] || [];
+    const current = list.find((b) => b.id.toString() === selectedBrand);
+    setSelectedBrandStock(current ? current.stock : null);
+    setSelectedBrandSatuan(current?.satuan || '');
+    if (current?.satuan) {
+      setSatuan(current.satuan);
+    }
+  }, [selectedBrand, selectedTask, brandsByTask]);
 
   async function fetchLocations() {
     try {
@@ -79,21 +105,71 @@ export default function InputFormModal() {
     }
   }
 
+  async function fetchBrands(taskId: string) {
+    if (!taskId) return;
+    // Avoid refetching if already cached
+    if (brandsByTask[taskId]) {
+      const list = brandsByTask[taskId];
+      if (list.length > 0 && !selectedBrand) {
+        setSelectedBrand(list[0].id.toString());
+        setSelectedBrandStock(list[0].stock ?? null);
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/brands?taskId=${taskId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setBrandsByTask(prev => ({ ...prev, [taskId]: data }));
+        if (data.length > 0) {
+          setSelectedBrand(data[0].id.toString());
+          setSelectedBrandStock(data[0].stock ?? null);
+          setSelectedBrandSatuan(data[0].satuan || '');
+          if (data[0].satuan) setSatuan(data[0].satuan);
+        } else {
+          setSelectedBrand('');
+          setSelectedBrandStock(null);
+          setSelectedBrandSatuan('');
+        }
+      }
+    } catch (error) {
+      console.error('Gagal ambil brand:', error);
+    }
+  }
+
   // 2. Fungsi Submit (Simpan Data)
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
     try {
+      if (!selectedTask) {
+        alert('Jenis pekerjaan wajib dipilih');
+        return;
+      }
+      if (!selectedBrand) {
+        alert('Brand wajib dipilih');
+        return;
+      }
+      const qtyNumber = parseInt(quantity, 10);
+      if (!Number.isFinite(qtyNumber) || qtyNumber <= 0) {
+        alert('Jumlah harus lebih dari 0');
+        return;
+      }
+      if (selectedBrandStock !== null && qtyNumber > selectedBrandStock) {
+        alert(`Stok tidak cukup. Sisa: ${selectedBrandStock}`);
+        return;
+      }
+
       // Kirim data ke API Logs
-      // find selected task title for storing in custom_description
-      const taskTitle = tasks.find(t => t.id.toString() === selectedTask)?.title || null;
       const res = await fetch('/api/logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           task_def_id: selectedTask ? parseInt(selectedTask, 10) : null,
-          custom_description: taskTitle, // store task title as description
+          custom_description: customDesc ? customDesc : null,
+          brand_id: parseInt(selectedBrand, 10),
           location,
           partners: partners.length > 0 ? partners.join(', ') : null,
           quantity: quantity || null,
@@ -155,7 +231,7 @@ export default function InputFormModal() {
             <Label htmlFor="task" className="font-semibold text-gray-700 text-sm md:text-base">
               Jenis Pekerjaan
             </Label>
-            <Select onValueChange={setSelectedTask} required>
+            <Select onValueChange={(val) => { setSelectedTask(val); setSelectedBrand(''); setSelectedBrandStock(null); }} required>
               <SelectTrigger className="w-full h-11 text-base">
                 <SelectValue placeholder="-- Pilih Pekerjaan --" />
               </SelectTrigger>
@@ -171,6 +247,58 @@ export default function InputFormModal() {
                 )}
               </SelectContent>
             </Select>
+            {selectedTask && tasks.find(t => t.id.toString() === selectedTask)?.title && (
+              <p className="text-sm text-gray-500">
+                {tasks.find(t => t.id.toString() === selectedTask)?.description || 'Tidak ada deskripsi.'}
+              </p>
+            )}
+          </div>
+
+          {/* INPUT 1a: Deskripsi Pekerjaan (opsional) */}
+          <div className="grid gap-2">
+            <Label className="font-semibold text-gray-700 text-sm md:text-base">Deskripsi pekerjaan (opsional)</Label>
+            <Input
+              value={customDesc}
+              onChange={(e) => setCustomDesc(e.target.value)}
+              placeholder="Tuliskan detail pekerjaan jika perlu"
+              className="h-11 text-base"
+            />
+          </div>
+
+          {/* INPUT 1b: BRAND */}
+          <div className="grid gap-2">
+            <Label className="font-semibold text-gray-700 text-sm md:text-base">Brand</Label>
+            <Select
+              value={selectedBrand}
+              onValueChange={setSelectedBrand}
+              disabled={!selectedTask || (brandsByTask[selectedTask]?.length ?? 0) === 0}
+              required
+            >
+              <SelectTrigger className="w-full h-11 text-base">
+                <SelectValue placeholder={selectedTask ? '-- Pilih Brand --' : 'Pilih pekerjaan dulu'} />
+              </SelectTrigger>
+              <SelectContent>
+                {!selectedTask ? (
+                  <SelectItem value="no-task" disabled>Pilih pekerjaan dulu</SelectItem>
+                ) : (brandsByTask[selectedTask]?.length ?? 0) === 0 ? (
+                  <SelectItem value="no-brand" disabled>Brand belum tersedia</SelectItem>
+                ) : (
+                  (brandsByTask[selectedTask] || []).map((brand) => (
+                    <SelectItem key={brand.id} value={brand.id.toString()}>
+                      {brand.name} (Stok: {brand.stock ?? 0}{brand.satuan ? ` • ${brand.satuan}` : ''})
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <div className="text-sm text-gray-500 space-y-1">
+              {selectedBrandStock !== null && (
+                <p>Stok tersisa: <span className="font-semibold text-gray-700">{selectedBrandStock}</span></p>
+              )}
+              {selectedBrandSatuan && (
+                <p>Satuan brand: <span className="font-semibold text-gray-700">{selectedBrandSatuan}</span></p>
+              )}
+            </div>
           </div>
 
           {/* INPUT 2: LOKASI / KETERANGAN */}
@@ -211,7 +339,12 @@ export default function InputFormModal() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="satuan" className="font-semibold text-gray-700 text-sm md:text-base">Satuan</Label>
-              <Select value={satuan} onValueChange={setSatuan} required>
+              <Select
+                value={satuan}
+                onValueChange={setSatuan}
+                disabled={!!selectedBrandSatuan}
+                required
+              >
                 <SelectTrigger className="w-full h-11 text-base">
                   <SelectValue placeholder="Pilih satuan" />
                 </SelectTrigger>
@@ -225,7 +358,10 @@ export default function InputFormModal() {
                   )}
                 </SelectContent>
               </Select>
-            </div>
+              </div>
+              {selectedBrandSatuan && (
+                <p className="text-xs text-gray-500">Satuan mengikuti brand (tidak bisa diubah).</p>
+              )}
           </div>
 
           {/* INPUT 4: PARTNERS (Optional, multiple) */}

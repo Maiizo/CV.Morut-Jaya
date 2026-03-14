@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import EditFormModal2 from '@/components/EditFormModal2';
 import LogoutButton from '@/components/LogoutButton';
 import InputFormModal from '@/components/InputFormModal';
@@ -16,8 +15,9 @@ import {
   MapPin, 
   Calendar, 
   Search,
-  Plus
+  
 } from 'lucide-react'; 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
 interface Log {
   id: number;
@@ -26,6 +26,8 @@ interface Log {
   nama: string;
   tugas: string; // This is now guaranteed by our mapping
   lokasi: string; // This is now guaranteed by our mapping
+  brand_id?: number | null;
+  brand_name?: string | null;
   partners?: string | null;
   quantity?: string | null;
   satuan?: string | null;
@@ -82,6 +84,10 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
   
   const [sortConfig, setSortConfig] = useState<{ key: keyof Log; direction: 'asc' | 'desc' } | null>(null);
 
+  // Pagination
+  const PAGE_SIZE = 50;
+  const [currentPage, setCurrentPage] = useState(1);
+
   // --- FETCH DATA ---
   useEffect(() => {
     fetchLogs();
@@ -95,8 +101,10 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
       // ✅ FIX: Map data immediately so 'tugas' and 'lokasi' definitely exist
       const formattedData = rawData.map((item: any) => ({
         ...item,
-        tugas: item.custom_description || item.tugas || '-',
+        tugas: item.task_title || item.tugas || item.custom_description || '-',
         lokasi: item.location || item.lokasi || '-',
+        brand_id: item.brand_id,
+        brand_name: item.brand_name || null,
         partners: item.partners || '',
         quantity: item.quantity || '',
         satuan: item.satuan || '',
@@ -217,6 +225,12 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
     return data;
   }, [logs, searchQuery, activeFilters, sortConfig, fromDate, toDate]);
 
+  // Reset to page 1 whenever filters/search/sort change
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, activeFilters, sortConfig, fromDate, toDate]);
+
+  const totalPages = Math.max(1, Math.ceil(processedLogs.length / PAGE_SIZE));
+  const paginatedLogs = processedLogs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
 
   // --- RENDER HELPERS ---
   const renderSortIcon = (key: keyof Log) => {
@@ -275,6 +289,7 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
             <div className="hidden md:block">
               <InputFormModal />
             </div>
+            
                 </div>
 
         {/* Date Range Filter - Mobile Optimized */}
@@ -407,6 +422,7 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
               >
                 <div className="flex items-center">Tugas {renderSortIcon('tugas')}</div>
               </th>
+              <th className="px-6 py-4 font-semibold">Brand</th>
               <th className="px-6 py-4 font-semibold cursor-pointer hover:bg-slate-100 transition-colors group" onClick={() => handleSort('lokasi')}>
                 <div className="flex items-center">Lokasi {renderSortIcon('lokasi')}</div>
               </th>
@@ -417,7 +433,7 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
-              {processedLogs.length === 0 ? (
+              {paginatedLogs.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                     <p className="text-lg font-medium text-slate-600 mb-1">Tidak ada data ditemukan</p>
@@ -425,7 +441,7 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
                   </td>
                 </tr>
               ) : (
-                processedLogs.map((log) => (
+                paginatedLogs.map((log) => (
                   <tr key={log.id} className="hover:bg-slate-50/80 transition-colors group">
                     
                     {/* Date */}
@@ -469,6 +485,11 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
                         </button>
                     </td>
 
+                    {/* Brand */}
+                    <td className="px-6 py-4 text-slate-700 text-sm">
+                      {log.brand_name ?? '-'}
+                    </td>
+
                     {/* Location */}
                     <td className="px-6 py-4">
                          <button 
@@ -509,6 +530,54 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
         </div>
       </Card>
 
+      {/* --- PAGINATION --- */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-2 py-3">
+          <p className="text-sm text-slate-500">
+            Halaman <span className="font-semibold">{currentPage}</span> dari <span className="font-semibold">{totalPages}</span> &nbsp;·&nbsp; {processedLogs.length} total data
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline" size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0"
+            >«</Button>
+            <Button
+              variant="outline" size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="h-8 px-3"
+            >←</Button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+              const page = start + i;
+              return (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className="h-8 w-8 p-0"
+                >{page}</Button>
+              );
+            })}
+            <Button
+              variant="outline" size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="h-8 px-3"
+            >→</Button>
+            <Button
+              variant="outline" size="sm"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 p-0"
+            >»</Button>
+          </div>
+        </div>
+      )}
+
       {/* --- MODALS --- */}
       <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
         <DialogContent className="sm:max-w-md">
@@ -524,6 +593,10 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
               <div className="grid grid-cols-3 items-center gap-4">
                 <span className="font-semibold text-slate-500">Tugas</span>
                 <span className="col-span-2 bg-slate-100 p-2 rounded">{selectedLog.tugas}</span>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-4">
+                <span className="font-semibold text-slate-500">Brand</span>
+                <span className="col-span-2">{selectedLog.brand_name || '-'}</span>
               </div>
               <div className="grid grid-cols-3 items-center gap-4">
                 <span className="font-semibold text-slate-500">Waktu</span>
@@ -565,12 +638,15 @@ export default function AdminDashboard({ userName = 'Admin' }: AdminDashboardPro
             // Update local state to reflect changes immediately
             setLogs(prev => prev.map(l => l.id === updated.id ? ({
             ...l,
-            tugas: updated.custom_description || l.tugas,
+            tugas: (updated as any).task_title || updated.tugas || updated.custom_description || l.tugas,
             lokasi: updated.location || l.lokasi,
             partners: updated.partners || l.partners,
             // also update raw fields if needed
             custom_description: updated.custom_description,
+            task_title: (updated as any).task_title ?? l.task_title,
             location: updated.location,
+            brand_id: updated.brand_id ?? l.brand_id,
+            brand_name: (updated as any).brand_name ?? l.brand_name,
             quantity: updated.quantity !== undefined ? updated.quantity : l.quantity,
             satuan: updated.satuan !== undefined ? updated.satuan : l.satuan
             }) : l));

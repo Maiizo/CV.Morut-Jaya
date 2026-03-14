@@ -29,8 +29,32 @@ async function seed() {
         id SERIAL PRIMARY KEY,
         title TEXT NOT NULL UNIQUE,
         is_archived BOOLEAN DEFAULT FALSE,
+        description TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
+
+      -- Brand catalog per pekerjaan
+      CREATE TABLE IF NOT EXISTS brands (
+        id SERIAL PRIMARY KEY,
+        task_def_id INTEGER NOT NULL REFERENCES task_definitions(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        satuan TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(task_def_id, name)
+      );
+      ALTER TABLE brands ADD COLUMN IF NOT EXISTS satuan TEXT;
+      CREATE INDEX IF NOT EXISTS idx_brands_task ON brands(task_def_id);
+
+      -- Stock per brand (non-negative)
+      CREATE TABLE IF NOT EXISTS brand_stocks (
+        brand_id INTEGER PRIMARY KEY REFERENCES brands(id) ON DELETE CASCADE,
+        stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      -- Track brand used on each activity log
+      ALTER TABLE activity_logs
+        ADD COLUMN IF NOT EXISTS brand_id INTEGER REFERENCES brands(id) ON DELETE SET NULL;
 
       ALTER TABLE activity_logs
         ADD COLUMN IF NOT EXISTS partners TEXT;
@@ -86,22 +110,46 @@ async function seed() {
     console.log('\n📋 Membuat daftar pekerjaan...');
 
     const tasks = [
-      'Paras',
-      'Spout',
-      'Pupuk',
-      'Kastrasi',
-      'Perbaikan pagar',
+      { title: 'Paras', description: 'Perawatan/perapian area kebun.' },
+      { title: 'Spout', description: 'Pengaplikasian spout di area kerja.' },
+      { title: 'Pupuk', description: 'Pemupukan sesuai kebutuhan tanaman.' },
+      { title: 'Kastrasi', description: 'Kastrasi atau perawatan bunga/tandan.' },
+      { title: 'Perbaikan pagar', description: 'Perbaikan atau pemeliharaan pagar.' },
     ];
 
-    for (const title of tasks) {
-      const check = await client.query('SELECT * FROM task_definitions WHERE title = $1', [title]);
-      
+    for (const task of tasks) {
+      const check = await client.query('SELECT id FROM task_definitions WHERE title = $1', [task.title]);
+      let taskId;
       if (check.rows.length === 0) {
-        await client.query('INSERT INTO task_definitions (title) VALUES ($1)', [title]);
-        console.log(`Pekerjaan ditambah: ${title}`);
+        const inserted = await client.query(
+          'INSERT INTO task_definitions (title, description) VALUES ($1, $2) RETURNING id',
+          [task.title, task.description || null]
+        );
+        taskId = inserted.rows[0].id;
+        console.log(`Pekerjaan ditambah: ${task.title}`);
       } else {
-        console.log(`Pekerjaan sudah ada: ${title}`);
+        taskId = check.rows[0].id;
+        if (task.description) {
+          await client.query('UPDATE task_definitions SET description = COALESCE(description, $2) WHERE id = $1', [taskId, task.description]);
+        }
+        console.log(`Pekerjaan sudah ada: ${task.title}`);
       }
+
+      // Seed a default brand per pekerjaan so user bisa memilih brand
+      const defaultBrandName = `${task.title} - Default`;
+      const brandRes = await client.query(
+        `INSERT INTO brands (task_def_id, name, satuan)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (task_def_id, name)
+         DO UPDATE SET satuan = COALESCE(brands.satuan, EXCLUDED.satuan)
+         RETURNING id`,
+        [taskId, defaultBrandName, 'unit']
+      );
+      const brandId = brandRes.rows[0].id;
+      await client.query(
+        'INSERT INTO brand_stocks (brand_id, stock) VALUES ($1, 0) ON CONFLICT (brand_id) DO NOTHING',
+        [brandId]
+      );
     }
 
     // --- 3. SEED SATUAN (Units) ---

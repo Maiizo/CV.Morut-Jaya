@@ -17,10 +17,12 @@ export async function GET() {
           CREATE TABLE IF NOT EXISTS task_definitions (
             id SERIAL PRIMARY KEY,
             title TEXT NOT NULL UNIQUE,
+            description TEXT,
             is_archived BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
         `);
+        await pool.query('ALTER TABLE task_definitions ADD COLUMN IF NOT EXISTS description TEXT;');
         return NextResponse.json([]);
       }
     } catch (createErr) {
@@ -35,10 +37,14 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { title } = body;
+    const { title, description } = body;
 
-    const query = 'INSERT INTO task_definitions (title) VALUES ($1) RETURNING *';
-    const result = await pool.query(query, [title]);
+    if (!title || !title.trim()) {
+      return NextResponse.json({ error: 'Judul pekerjaan wajib diisi' }, { status: 400 });
+    }
+
+    const query = 'INSERT INTO task_definitions (title, description) VALUES ($1, $2) RETURNING *';
+    const result = await pool.query(query, [title.trim(), description || null]);
 
     return NextResponse.json(result.rows[0]);
   } catch (error) {
@@ -53,10 +59,13 @@ export async function POST(request) {
 // 3. PUT: Update task by ID
 export async function PUT(request) {
   try {
-    const { id, title } = await request.json();
+    const { id, title, description } = await request.json();
     if (!id || !title) return NextResponse.json({ error: 'Missing id or title' }, { status: 400 });
 
-    const result = await pool.query('UPDATE task_definitions SET title = $1 WHERE id = $2 RETURNING *', [title, id]);
+    const result = await pool.query(
+      'UPDATE task_definitions SET title = $1, description = $2 WHERE id = $3 RETURNING *',
+      [title, description || null, id]
+    );
     
     if (result.rows.length === 0) {
       return NextResponse.json({ error: 'Pekerjaan tidak ditemukan' }, { status: 404 });

@@ -94,18 +94,19 @@ export default function OwnerPage() {
 
       const result = await response.json();
 
-      if (!response.ok) {
+      // Show validation errors (422) in the results panel instead of alert
+      if (!response.ok && response.status !== 422) {
         alert('Import gagal: ' + (result.error || 'Unknown error'));
         return;
       }
 
       setImportResult(result);
-      setFile(null);
-      
-      // Reset file input
-      const fileInput = document.getElementById('file-input') as HTMLInputElement;
-      if (fileInput) {
-        fileInput.value = '';
+
+      // Only clear file if import actually succeeded
+      if (result.success) {
+        setFile(null);
+        const fileInput = document.getElementById('file-input') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
       }
     } catch (error) {
       console.error('Import error:', error);
@@ -216,15 +217,21 @@ export default function OwnerPage() {
 
             {/* Import Results */}
             {importResult && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+              <div className={`mt-6 p-4 rounded-lg border ${importResult.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                 <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
                   <FileSpreadsheet className="h-5 w-5" />
                   Hasil Import
                 </h3>
                 <div className="space-y-2 text-sm">
-                  <p className="text-green-600">
-                    ✓ Berhasil import: {importResult.imported} dari {importResult.total} baris
-                  </p>
+                  {importResult.success ? (
+                    <p className="text-green-700 font-medium">
+                      ✓ Berhasil import {importResult.imported} dari {importResult.total} baris
+                    </p>
+                  ) : (
+                    <p className="text-red-700 font-medium">
+                      ✗ {importResult.message || 'Import dibatalkan — tidak ada data yang dimasukkan'}
+                    </p>
+                  )}
                   {importResult.errors && importResult.errors.length > 0 && (
                     <div className="mt-3">
                       <p className="text-red-600 font-medium mb-1">
@@ -250,14 +257,8 @@ export default function OwnerPage() {
           <CardHeader>
             <CardTitle className="text-blue-800">Petunjuk Penggunaan</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-blue-900 space-y-2">
-            <p><strong>Export:</strong></p>
-            <ul className="list-disc list-inside ml-2 space-y-1">
-              <li>Pilih tanggal mulai dan tanggal akhir</li>
-              <li>Klik tombol "Export Excel" untuk download file</li>
-              <li>File akan berisi data sesuai format template</li>
-            </ul>
-            <p className="mt-4"><strong>Import:</strong></p>
+          <CardContent className="text-sm text-blue-900">
+            <p><strong>Import:</strong></p>
             <ul className="list-disc list-inside ml-2 space-y-1">
               <li>File Excel harus mengikuti format yang sama dengan export</li>
               <li>Kolom wajib: Nama, Tugas</li>

@@ -23,8 +23,8 @@ export async function GET(request) {
     const query = `
       SELECT
         activity_logs.id,
-        to_char(activity_logs.created_at, 'DD Mon YYYY') as tanggal,
-        to_char(activity_logs.log_time, 'HH24:MI:SS') as jam,
+        to_char(activity_logs.log_time, 'YYYY-MM-DD') as tanggal,
+        to_char(activity_logs.log_time, 'HH24:MI') as jam,
         users.username as nama,
         activity_logs.custom_description as tugas,
         activity_logs.location as lokasi,
