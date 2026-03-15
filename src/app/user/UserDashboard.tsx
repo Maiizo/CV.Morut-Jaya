@@ -22,6 +22,10 @@ interface LogEntry {
   quantity?: string | null;
   satuan?: string | null;
   nama?: string;    // Tambahan jika API mengembalikan nama
+  task_title?: string | null;
+  custom_description?: string | null;
+  brand_id?: number | null;
+  task_def_id?: number | null;
 }
 
 interface UserDashboardProps {

@@ -31,6 +31,7 @@ interface Log {
   partners?: string | null;
   quantity?: string | null;
   satuan?: string | null;
+  task_title?: string | null;
   // Keep these for reference/compatibility
   custom_description?: string | null;
   location?: string | null;
