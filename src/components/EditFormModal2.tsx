@@ -29,6 +29,7 @@ interface EditFormModalProps {
 export default function EditFormModal2({ item, onClose, onSaved }: EditFormModalProps) {
   const [open, setOpen] = useState(false);
   const [tasks, setTasks] = useState<{ id: number; title: string; description?: string }[]>([]);
+  const [taskSearch, setTaskSearch] = useState('');
   const [selectedTask, setSelectedTask] = useState('');
   const [brandsByTask, setBrandsByTask] = useState<Record<string, { id: number; name: string; stock: number; description?: string; satuan?: string; task_def_id: number; task_title?: string; }[]>>({});
   const [selectedBrand, setSelectedBrand] = useState('');
@@ -120,6 +121,15 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
       setSelectedBrandSatuan('');
     }
   }, [brandsByTask, selectedBrand, selectedTask]);
+
+  const filteredTasks = tasks.filter((task) => {
+    const query = taskSearch.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      task.title.toLowerCase().includes(query) ||
+      (task.description || '').toLowerCase().includes(query)
+    );
+  });
 
   useEffect(() => {
     async function fetchSatuan() {
@@ -264,6 +274,12 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
         <form onSubmit={handleSubmit} className="grid gap-5 md:gap-6 py-4">
           <div className="grid gap-2">
             <Label className="font-semibold text-gray-700 text-sm md:text-base">Jenis Pekerjaan</Label>
+            <Input
+              value={taskSearch}
+              onChange={(e) => setTaskSearch(e.target.value)}
+              placeholder="Cari pekerjaan..."
+              className="h-10 md:h-11"
+            />
                   <Select onValueChange={setSelectedTask} value={selectedTask} required>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="-- Pilih Pekerjaan --" />
@@ -271,13 +287,20 @@ export default function EditFormModal2({ item, onClose, onSaved }: EditFormModal
                     <SelectContent>
                       {tasks.length === 0 ? (
                         <SelectItem value="loading" disabled>Memuat daftar...</SelectItem>
+                      ) : filteredTasks.length === 0 ? (
+                        <SelectItem value="no-result" disabled>Tidak ada pekerjaan yang cocok</SelectItem>
                       ) : (
-                        tasks.map((t) => (
+                        filteredTasks.map((t) => (
                           <SelectItem key={t.id} value={t.id.toString()}>{t.title}</SelectItem>
                         ))
                       )}
                     </SelectContent>
                   </Select>
+                  {tasks.length > 0 && (
+                    <p className="text-xs text-gray-500">
+                      Menampilkan {filteredTasks.length} dari {tasks.length} pekerjaan.
+                    </p>
+                  )}
                   {selectedTask && tasks.find(t => t.id.toString() === selectedTask)?.title && (
                     <p className="text-sm text-gray-500">
                       {tasks.find(t => t.id.toString() === selectedTask)?.description || 'Tidak ada deskripsi.'}

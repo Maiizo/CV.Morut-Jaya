@@ -24,6 +24,7 @@ import {
 export default function InputFormModal() {
   // State untuk data form
   const [tasks, setTasks] = useState<{ id: number; title: string; description?: string }[]>([]);
+  const [taskSearch, setTaskSearch] = useState('');
   const [selectedTask, setSelectedTask] = useState("");
   const [brandsByTask, setBrandsByTask] = useState<Record<string, { id: number; name: string; stock: number; description?: string; satuan?: string; task_def_id: number; task_title?: string; }[]>>({});
   const [selectedBrand, setSelectedBrand] = useState("");
@@ -79,6 +80,15 @@ export default function InputFormModal() {
       setSatuan(current.satuan);
     }
   }, [selectedBrand, selectedTask, brandsByTask]);
+
+  const filteredTasks = tasks.filter((task) => {
+    const query = taskSearch.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      task.title.toLowerCase().includes(query) ||
+      (task.description || '').toLowerCase().includes(query)
+    );
+  });
 
   async function fetchLocations() {
     try {
@@ -231,6 +241,12 @@ export default function InputFormModal() {
             <Label htmlFor="task" className="font-semibold text-gray-700 text-sm md:text-base">
               Jenis Pekerjaan
             </Label>
+            <Input
+              value={taskSearch}
+              onChange={(e) => setTaskSearch(e.target.value)}
+              placeholder="Cari pekerjaan..."
+              className="h-11 text-base"
+            />
             <Select onValueChange={(val) => { setSelectedTask(val); setSelectedBrand(''); setSelectedBrandStock(null); }} required>
               <SelectTrigger className="w-full h-11 text-base">
                 <SelectValue placeholder="-- Pilih Pekerjaan --" />
@@ -238,8 +254,10 @@ export default function InputFormModal() {
               <SelectContent>
                 {tasks.length === 0 ? (
                   <SelectItem value="loading" disabled>Memuat daftar...</SelectItem>
+                ) : filteredTasks.length === 0 ? (
+                  <SelectItem value="no-result" disabled>Tidak ada pekerjaan yang cocok</SelectItem>
                 ) : (
-                  tasks.map((task) => (
+                  filteredTasks.map((task) => (
                     <SelectItem key={task.id} value={task.id.toString()}>
                       {task.title}
                     </SelectItem>
@@ -247,6 +265,11 @@ export default function InputFormModal() {
                 )}
               </SelectContent>
             </Select>
+            {tasks.length > 0 && (
+              <p className="text-xs text-gray-500">
+                Menampilkan {filteredTasks.length} dari {tasks.length} pekerjaan.
+              </p>
+            )}
             {selectedTask && tasks.find(t => t.id.toString() === selectedTask)?.title && (
               <p className="text-sm text-gray-500">
                 {tasks.find(t => t.id.toString() === selectedTask)?.description || 'Tidak ada deskripsi.'}
