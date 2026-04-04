@@ -22,11 +22,17 @@ import {
 } from "@/components/ui/select";
 
 export default function InputFormModal() {
+  const toLocalDateTimeString = (date: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  };
+
   // State untuk data form
   const [tasks, setTasks] = useState<{ id: number; title: string; description?: string }[]>([]);
   const [taskSearch, setTaskSearch] = useState('');
   const [selectedTask, setSelectedTask] = useState("");
   const [brandsByTask, setBrandsByTask] = useState<Record<string, { id: number; name: string; stock: number; description?: string; satuan?: string; task_def_id: number; task_title?: string; }[]>>({});
+  const [selectedTaskHasBrands, setSelectedTaskHasBrands] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState("");
   const [selectedBrandStock, setSelectedBrandStock] = useState<number | null>(null);
   const [selectedBrandSatuan, setSelectedBrandSatuan] = useState<string>('');
@@ -64,6 +70,7 @@ export default function InputFormModal() {
     if (selectedTask) {
       fetchBrands(selectedTask);
     } else {
+      setSelectedTaskHasBrands(false);
       setSelectedBrand('');
       setSelectedBrandStock(null);
       setSelectedBrandSatuan('');
@@ -120,6 +127,7 @@ export default function InputFormModal() {
     // Avoid refetching if already cached
     if (brandsByTask[taskId]) {
       const list = brandsByTask[taskId];
+      setSelectedTaskHasBrands(list.length > 0);
       if (list.length > 0 && !selectedBrand) {
         setSelectedBrand(list[0].id.toString());
         setSelectedBrandStock(list[0].stock ?? null);
@@ -132,6 +140,7 @@ export default function InputFormModal() {
       if (res.ok) {
         const data = await res.json();
         setBrandsByTask(prev => ({ ...prev, [taskId]: data }));
+        setSelectedTaskHasBrands(data.length > 0);
         if (data.length > 0) {
           setSelectedBrand(data[0].id.toString());
           setSelectedBrandStock(data[0].stock ?? null);
@@ -158,7 +167,7 @@ export default function InputFormModal() {
         alert('Jenis pekerjaan wajib dipilih');
         return;
       }
-      if (!selectedBrand) {
+      if (selectedTaskHasBrands && !selectedBrand) {
         alert('Brand wajib dipilih');
         return;
       }
@@ -179,12 +188,12 @@ export default function InputFormModal() {
         body: JSON.stringify({
           task_def_id: selectedTask ? parseInt(selectedTask, 10) : null,
           custom_description: customDesc ? customDesc : null,
-          brand_id: parseInt(selectedBrand, 10),
+          brand_id: selectedTaskHasBrands && selectedBrand ? parseInt(selectedBrand, 10) : null,
           location,
           partners: partners.length > 0 ? partners.join(', ') : null,
           quantity: quantity || null,
           satuan: satuan || null,
-          log_time: new Date().toISOString()
+          log_time: toLocalDateTimeString(new Date())
         }),
       });
 
@@ -289,40 +298,42 @@ export default function InputFormModal() {
           </div>
 
           {/* INPUT 1b: BRAND */}
-          <div className="grid gap-2">
-            <Label className="font-semibold text-gray-700 text-sm md:text-base">Brand</Label>
-            <Select
-              value={selectedBrand}
-              onValueChange={setSelectedBrand}
-              disabled={!selectedTask || (brandsByTask[selectedTask]?.length ?? 0) === 0}
-              required
-            >
-              <SelectTrigger className="w-full h-11 text-base">
-                <SelectValue placeholder={selectedTask ? '-- Pilih Brand --' : 'Pilih pekerjaan dulu'} />
-              </SelectTrigger>
-              <SelectContent>
-                {!selectedTask ? (
-                  <SelectItem value="no-task" disabled>Pilih pekerjaan dulu</SelectItem>
-                ) : (brandsByTask[selectedTask]?.length ?? 0) === 0 ? (
-                  <SelectItem value="no-brand" disabled>Brand belum tersedia</SelectItem>
-                ) : (
-                  (brandsByTask[selectedTask] || []).map((brand) => (
-                    <SelectItem key={brand.id} value={brand.id.toString()}>
-                      {brand.name} (Stok: {brand.stock ?? 0}{brand.satuan ? ` • ${brand.satuan}` : ''})
-                    </SelectItem>
-                  ))
+          {selectedTaskHasBrands && (
+            <div className="grid gap-2">
+              <Label className="font-semibold text-gray-700 text-sm md:text-base">Brand</Label>
+              <Select
+                value={selectedBrand}
+                onValueChange={setSelectedBrand}
+                disabled={!selectedTask || (brandsByTask[selectedTask]?.length ?? 0) === 0}
+                required={selectedTaskHasBrands}
+              >
+                <SelectTrigger className="w-full h-11 text-base">
+                  <SelectValue placeholder={selectedTask ? '-- Pilih Brand --' : 'Pilih pekerjaan dulu'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {!selectedTask ? (
+                    <SelectItem value="no-task" disabled>Pilih pekerjaan dulu</SelectItem>
+                  ) : (brandsByTask[selectedTask]?.length ?? 0) === 0 ? (
+                    <SelectItem value="no-brand" disabled>Brand belum tersedia</SelectItem>
+                  ) : (
+                    (brandsByTask[selectedTask] || []).map((brand) => (
+                      <SelectItem key={brand.id} value={brand.id.toString()}>
+                        {brand.name} (Stok: {brand.stock ?? 0}{brand.satuan ? ` • ${brand.satuan}` : ''})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <div className="text-sm text-gray-500 space-y-1">
+                {selectedBrandStock !== null && (
+                  <p>Stok tersisa: <span className="font-semibold text-gray-700">{selectedBrandStock}</span></p>
                 )}
-              </SelectContent>
-            </Select>
-            <div className="text-sm text-gray-500 space-y-1">
-              {selectedBrandStock !== null && (
-                <p>Stok tersisa: <span className="font-semibold text-gray-700">{selectedBrandStock}</span></p>
-              )}
-              {selectedBrandSatuan && (
-                <p>Satuan brand: <span className="font-semibold text-gray-700">{selectedBrandSatuan}</span></p>
-              )}
+                {selectedBrandSatuan && (
+                  <p>Satuan brand: <span className="font-semibold text-gray-700">{selectedBrandSatuan}</span></p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* INPUT 2: LOKASI / KETERANGAN */}
           <div className="grid gap-2">
